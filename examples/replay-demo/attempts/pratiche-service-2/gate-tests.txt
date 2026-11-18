@@ -1,0 +1,86 @@
+Running one project: migrated
+FAIL migrated migrated/src/app/services/pratiche.service.spec.ts
+  PraticheService (gold, portato dal service AngularJS)
+    valida
+      ✓ nessun errore con dati completi (14 ms)
+      ✓ segnala i campi obbligatori mancanti (3 ms)
+      ✓ considera vuoti oggetto e richiedente fatti solo di spazi (2 ms)
+      ✓ rifiuta un codice fiscale con formato errato (2 ms)
+      ✓ accetta un codice fiscale in minuscolo (2 ms)
+      ✓ accetta undefined senza lanciare (2 ms)
+    crea
+      ✓ crea una bozza con id progressivo e dati normalizzati (2 ms)
+      ✓ lancia un errore di validazione con code e dettaglio campi (2 ms)
+    cambiaStato
+      ✓ BOZZA -> PROTOCOLLATA assegna protocollo, data e scadenza a 30 giorni lavorativi (3 ms)
+      ✓ i numeri di protocollo sono progressivi per anno e ripartono a nuovo anno (2 ms)
+      ✓ percorso completo fino ad APPROVATA (1 ms)
+      ✕ IN_ISTRUTTORIA può finire anche in RESPINTA (2 ms)
+      ✕ mappa completa delle transizioni consentite (3 ms)
+      ✓ rifiuta transizioni non consentite (con messaggio e code) (1 ms)
+      ✓ gli stati finali non hanno uscite (1 ms)
+      ✓ una pratica annullata non si può riaprire e non ha avuto protocollo (8 ms)
+      ✓ lancia NON_TROVATA per un id inesistente (1 ms)
+      ✓ transizioniPossibili restituisce una copia (1 ms)
+    cerca
+      ✓ senza criteri restituisce tutto (2 ms)
+      ✓ filtra per testo su oggetto e richiedente, senza distinguere maiuscole (2 ms)
+      ✓ filtra per stato (5 ms)
+      ✓ combina testo e stato (4 ms)
+      ✓ il testo di soli spazi non filtra (1 ms)
+    contaPerStato
+      ✓ restituisce tutti gli stati, anche a zero (2 ms)
+
+  ● PraticheService (gold, portato dal service AngularJS) › cambiaStato › IN_ISTRUTTORIA può finire anche in RESPINTA
+
+    Transizione non consentita: IN_ISTRUTTORIA -> RESPINTA
+
+      29 |
+      30 | function errore(code: ErroreApp['code'], message: string, errori?: ErroriValidazione): ErroreApp {
+    > 31 |   const e = new Error(message) as ErroreApp;
+         |             ^
+      32 |   e.code = code;
+      33 |   if (errori) {
+      34 |     e.errori = errori;
+
+      at errore (migrated/src/app/services/pratiche.service.ts:31:13)
+      at PraticheService.cambiaStato (migrated/src/app/services/pratiche.service.ts:123:13)
+      at migrated/src/app/services/pratiche.service.spec.ts:129:9
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PraticheService (gold, portato dal service AngularJS) › cambiaStato › mappa completa delle transizioni consentite
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "APPROVATA",
+    -   "RESPINTA",
+      ]
+
+      135 |       expect(S.transizioniPossibili('BOZZA' as never)).toEqual(['PROTOCOLLATA', 'ANNULLATA']);
+      136 |       expect(S.transizioniPossibili('PROTOCOLLATA' as never)).toEqual(['IN_ISTRUTTORIA', 'ANNULLATA']);
+    > 137 |       expect(S.transizioniPossibili('IN_ISTRUTTORIA' as never)).toEqual(['APPROVATA', 'RESPINTA']);
+          |                                                                 ^
+      138 |     });
+      139 |
+      140 |     it('rifiuta transizioni non consentite (con messaggio e code)', () => {
+
+      at migrated/src/app/services/pratiche.service.spec.ts:137:65
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 22 passed, 24 total
+Snapshots:   0 total
+Time:        2.529 s, estimated 3 s
+Ran all test suites within paths "migrated/src/app/services/pratiche.service.spec.ts".

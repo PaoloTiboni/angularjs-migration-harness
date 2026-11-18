@@ -1,0 +1,5 @@
+migrated/src/app/services/pratiche.service.ts(154,7): error TS7053: Element implicitly has an 'any' type because expression of type 'Stato' can't be used to index type '{}'.
+  Property 'BOZZA' does not exist on type '{}'.
+migrated/src/app/services/pratiche.service.ts(157,7): error TS7053: Element implicitly has an 'any' type because expression of type 'Stato' can't be used to index type '{}'.
+  Property 'BOZZA' does not exist on type '{}'.
+migrated/src/app/services/pratiche.service.ts(159,5): error TS2740: Type '{}' is missing the following properties from type 'Record<Stato, number>': BOZZA, PROTOCOLLATA, IN_ISTRUTTORIA, APPROVATA, and 2 more.

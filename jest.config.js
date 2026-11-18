@@ -7,6 +7,11 @@ module.exports = {
       testMatch: ['<rootDir>/tests/**/*.spec.js']
     },
     {
+      displayName: 'harness',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/harness/__tests__/**/*.spec.js']
+    },
+    {
       displayName: 'migrated',
       preset: 'jest-preset-angular',
       setupFilesAfterEnv: ['<rootDir>/migrated/setup-jest.ts'],

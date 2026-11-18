@@ -1,0 +1,38 @@
+Running one project: migrated
+PASS migrated migrated/src/app/services/pratiche.service.spec.ts
+  PraticheService (gold, portato dal service AngularJS)
+    valida
+      ✓ nessun errore con dati completi (18 ms)
+      ✓ segnala i campi obbligatori mancanti (4 ms)
+      ✓ considera vuoti oggetto e richiedente fatti solo di spazi (3 ms)
+      ✓ rifiuta un codice fiscale con formato errato (3 ms)
+      ✓ accetta un codice fiscale in minuscolo (2 ms)
+      ✓ accetta undefined senza lanciare (2 ms)
+    crea
+      ✓ crea una bozza con id progressivo e dati normalizzati (2 ms)
+      ✓ lancia un errore di validazione con code e dettaglio campi (2 ms)
+    cambiaStato
+      ✓ BOZZA -> PROTOCOLLATA assegna protocollo, data e scadenza a 30 giorni lavorativi (3 ms)
+      ✓ i numeri di protocollo sono progressivi per anno e ripartono a nuovo anno (3 ms)
+      ✓ percorso completo fino ad APPROVATA (2 ms)
+      ✓ IN_ISTRUTTORIA può finire anche in RESPINTA (1 ms)
+      ✓ mappa completa delle transizioni consentite (2 ms)
+      ✓ rifiuta transizioni non consentite (con messaggio e code) (2 ms)
+      ✓ gli stati finali non hanno uscite (2 ms)
+      ✓ una pratica annullata non si può riaprire e non ha avuto protocollo (10 ms)
+      ✓ lancia NON_TROVATA per un id inesistente (2 ms)
+      ✓ transizioniPossibili restituisce una copia (2 ms)
+    cerca
+      ✓ senza criteri restituisce tutto (2 ms)
+      ✓ filtra per testo su oggetto e richiedente, senza distinguere maiuscole (2 ms)
+      ✓ filtra per stato (2 ms)
+      ✓ combina testo e stato (8 ms)
+      ✓ il testo di soli spazi non filtra (1 ms)
+    contaPerStato
+      ✓ restituisce tutti gli stati, anche a zero (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       24 passed, 24 total
+Snapshots:   0 total
+Time:        2.562 s
+Ran all test suites within paths "migrated/src/app/services/pratiche.service.spec.ts".

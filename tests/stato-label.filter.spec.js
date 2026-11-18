@@ -26,4 +26,10 @@ describe('filtro statoLabel', () => {
   it('restituisce il valore originale per stati sconosciuti', () => {
     expect(statoLabel('FOO')).toBe('FOO');
   });
+
+  it('QUIRK (bug latente, non corretto): per chiavi di Object.prototype restituisce la funzione ereditata', () => {
+    // ETICHETTE[stato] || stato: 'constructor' trova Object.prototype.constructor (truthy)
+    expect(typeof statoLabel('constructor')).toBe('function');
+    expect(typeof statoLabel('toString')).toBe('function');
+  });
 });

@@ -1,0 +1,52 @@
+{
+  "descrizione": "Manifest delle unità di migrazione. status=done: migrata a mano (riferimento gold). status=pending: da migrare con il loop. deps = unità che devono essere migrate prima. I gold spec delle unità pending stanno in harness/gold/ e vengono copiati nella workdir ma NON sono modificabili dall'agente.",
+  "units": [
+    {
+      "id": "orologio",
+      "status": "done",
+      "legacy": ["src/services/orologio.service.js"],
+      "targets": ["migrated/src/app/services/orologio.service.ts"],
+      "deps": []
+    },
+    {
+      "id": "scadenze",
+      "status": "done",
+      "legacy": ["src/services/scadenze.service.js"],
+      "targets": ["migrated/src/app/services/scadenze.service.ts"],
+      "deps": []
+    },
+    {
+      "id": "scadenza-badge",
+      "status": "done",
+      "legacy": ["src/directives/scadenza-badge.directive.js"],
+      "targets": ["migrated/src/app/components/scadenza-badge/scadenza-badge.component.ts"],
+      "deps": ["orologio", "scadenze"]
+    },
+    {
+      "id": "stato-label",
+      "status": "pending",
+      "legacy": ["src/filters/stato-label.filter.js"],
+      "legacyTests": ["tests/stato-label.filter.spec.js"],
+      "targets": ["migrated/src/app/pipes/stato-label.pipe.ts"],
+      "goldSpec": {
+        "from": "harness/gold/stato-label/stato-label.pipe.spec.ts",
+        "to": "migrated/src/app/pipes/stato-label.pipe.spec.ts"
+      },
+      "deps": [],
+      "notes": "Pipe standalone pura chiamata 'statoLabel', classe StatoLabelPipe. Il filtro legacy ha un bug latente (chiavi di Object.prototype): NON correggerlo, la migrazione deve preservare il comportamento."
+    },
+    {
+      "id": "pratiche-service",
+      "status": "pending",
+      "legacy": ["src/services/pratiche.service.js"],
+      "legacyTests": ["tests/pratiche.service.spec.js"],
+      "targets": ["migrated/src/app/services/pratiche.service.ts"],
+      "goldSpec": {
+        "from": "harness/gold/pratiche-service/pratiche.service.spec.ts",
+        "to": "migrated/src/app/services/pratiche.service.spec.ts"
+      },
+      "deps": ["orologio", "scadenze"],
+      "notes": "Service @Injectable({providedIn:'root'}) classe PraticheService, con stato interno in memoria. Usa Orologio e ScadenzeService via inject(). Gli errori sono Error con proprietà 'code' (e 'errori' per la validazione). Non serve il metodo reset() del legacy."
+    }
+  ]
+}

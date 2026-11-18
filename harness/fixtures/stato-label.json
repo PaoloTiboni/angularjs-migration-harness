@@ -1,0 +1,17 @@
+{
+  "descrizione": "FIXTURE di replay scritta a mano per validare il loop: NON è output di un modello.",
+  "attempts": [
+    {
+      "note": "nome della pipe sbagliato ('stato-label')",
+      "files": {
+        "migrated/src/app/pipes/stato-label.pipe.ts": "import { Pipe, PipeTransform } from '@angular/core';\n\nconst ETICHETTE: Record<string, string> = {\n  BOZZA: 'Bozza',\n  PROTOCOLLATA: 'Protocollata',\n  IN_ISTRUTTORIA: 'In istruttoria',\n  APPROVATA: 'Approvata',\n  RESPINTA: 'Respinta',\n  ANNULLATA: 'Annullata',\n};\n\n/** Trasforma il codice di stato in etichetta leggibile (porting del filtro AngularJS statoLabel). */\n@Pipe({ name: 'stato-label', standalone: true })\nexport class StatoLabelPipe implements PipeTransform {\n  transform(stato: string | null | undefined): string {\n    if (!stato) {\n      return '';\n    }\n    // `||` e non `??`: preserva esattamente il comportamento del filtro legacy\n    return ETICHETTE[stato] || stato;\n  }\n}\n"
+      }
+    },
+    {
+      "note": "corretto",
+      "files": {
+        "migrated/src/app/pipes/stato-label.pipe.ts": "import { Pipe, PipeTransform } from '@angular/core';\n\nconst ETICHETTE: Record<string, string> = {\n  BOZZA: 'Bozza',\n  PROTOCOLLATA: 'Protocollata',\n  IN_ISTRUTTORIA: 'In istruttoria',\n  APPROVATA: 'Approvata',\n  RESPINTA: 'Respinta',\n  ANNULLATA: 'Annullata',\n};\n\n/** Trasforma il codice di stato in etichetta leggibile (porting del filtro AngularJS statoLabel). */\n@Pipe({ name: 'statoLabel', standalone: true })\nexport class StatoLabelPipe implements PipeTransform {\n  transform(stato: string | null | undefined): string {\n    if (!stato) {\n      return '';\n    }\n    // `||` e non `??`: preserva esattamente il comportamento del filtro legacy\n    return ETICHETTE[stato] || stato;\n  }\n}\n"
+      }
+    }
+  ]
+}

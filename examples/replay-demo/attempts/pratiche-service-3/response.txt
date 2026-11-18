@@ -1,0 +1,163 @@
+<file path="migrated/src/app/services/pratiche.service.ts">
+import { Injectable, inject } from '@angular/core';
+
+import { Orologio } from './orologio.service';
+import { ScadenzeService } from './scadenze.service';
+
+export type Stato = 'BOZZA' | 'PROTOCOLLATA' | 'IN_ISTRUTTORIA' | 'APPROVATA' | 'RESPINTA' | 'ANNULLATA';
+
+export interface DatiPratica {
+  oggetto: string;
+  richiedente: string;
+  codiceFiscale: string;
+}
+
+export interface Pratica extends DatiPratica {
+  id: number;
+  stato: Stato;
+  dataCreazione: Date;
+  numeroProtocollo: string | null;
+  dataProtocollo: Date | null;
+  scadenza: Date | null;
+}
+
+export type ErroriValidazione = Partial<Record<keyof DatiPratica, string>>;
+
+export interface ErroreApp extends Error {
+  code: 'VALIDAZIONE' | 'NON_TROVATA' | 'TRANSIZIONE';
+  errori?: ErroriValidazione;
+}
+
+function errore(code: ErroreApp['code'], message: string, errori?: ErroriValidazione): ErroreApp {
+  const e = new Error(message) as ErroreApp;
+  e.code = code;
+  if (errori) {
+    e.errori = errori;
+  }
+  return e;
+}
+
+const TRANSIZIONI: Record<Stato, Stato[]> = {
+  BOZZA: ['PROTOCOLLATA', 'ANNULLATA'],
+  PROTOCOLLATA: ['IN_ISTRUTTORIA', 'ANNULLATA'],
+  IN_ISTRUTTORIA: ['APPROVATA', 'RESPINTA'],
+  APPROVATA: [],
+  RESPINTA: [],
+  ANNULLATA: [],
+};
+
+const GIORNI_SCADENZA = 30;
+const CF_REGEX = /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/;
+
+/**
+ * Gestione in memoria delle pratiche con workflow di stato.
+ * BOZZA -> PROTOCOLLATA -> IN_ISTRUTTORIA -> APPROVATA | RESPINTA
+ * BOZZA e PROTOCOLLATA possono anche andare in ANNULLATA.
+ */
+@Injectable({ providedIn: 'root' })
+export class PraticheService {
+  private readonly orologio = inject(Orologio);
+  private readonly scadenze = inject(ScadenzeService);
+
+  private pratiche: Pratica[] = [];
+  private prossimoId = 1;
+  private contatoriProtocollo: Record<number, number> = {}; // anno -> ultimo numero assegnato
+
+  readonly stati = Object.keys(TRANSIZIONI) as Stato[];
+
+  tutte(): Pratica[] {
+    return this.pratiche;
+  }
+
+  trova(id: number): Pratica | null {
+    return this.pratiche.find((p) => p.id === id) ?? null;
+  }
+
+  /** Ritorna { campo: messaggio }; vuoto se i dati sono validi. */
+  valida(dati?: Partial<DatiPratica> | null): ErroriValidazione {
+    const errori: ErroriValidazione = {};
+    const d = dati || {};
+    if (!d.oggetto || !String(d.oggetto).trim()) {
+      errori.oggetto = 'Oggetto obbligatorio';
+    }
+    if (!d.richiedente || !String(d.richiedente).trim()) {
+      errori.richiedente = 'Richiedente obbligatorio';
+    }
+    if (!d.codiceFiscale) {
+      errori.codiceFiscale = 'Codice fiscale obbligatorio';
+    } else if (!CF_REGEX.test(String(d.codiceFiscale).toUpperCase())) {
+      errori.codiceFiscale = 'Codice fiscale non valido';
+    }
+    return errori;
+  }
+
+  crea(dati: DatiPratica): Pratica {
+    const errori = this.valida(dati);
+    if (Object.keys(errori).length > 0) {
+      throw errore('VALIDAZIONE', 'Dati non validi', errori);
+    }
+    const pratica: Pratica = {
+      id: this.prossimoId++,
+      oggetto: String(dati.oggetto).trim(),
+      richiedente: String(dati.richiedente).trim(),
+      codiceFiscale: String(dati.codiceFiscale).toUpperCase(),
+      stato: 'BOZZA',
+      dataCreazione: this.orologio.oggi(),
+      numeroProtocollo: null,
+      dataProtocollo: null,
+      scadenza: null,
+    };
+    this.pratiche.push(pratica);
+    return pratica;
+  }
+
+  transizioniPossibili(stato: Stato): Stato[] {
+    return (TRANSIZIONI[stato] || []).slice();
+  }
+
+  cambiaStato(id: number, nuovoStato: Stato): Pratica {
+    const pratica = this.trova(id);
+    if (!pratica) {
+      throw errore('NON_TROVATA', 'Pratica non trovata');
+    }
+    if (TRANSIZIONI[pratica.stato].indexOf(nuovoStato) === -1) {
+      throw errore('TRANSIZIONE', 'Transizione non consentita: ' + pratica.stato + ' -> ' + nuovoStato);
+    }
+    if (nuovoStato === 'PROTOCOLLATA') {
+      const oggi = this.orologio.oggi();
+      const anno = oggi.getFullYear();
+      this.contatoriProtocollo[anno] = (this.contatoriProtocollo[anno] || 0) + 1;
+      pratica.numeroProtocollo = anno + '/' + String(this.contatoriProtocollo[anno]).padStart(4, '0');
+      pratica.dataProtocollo = oggi;
+      pratica.scadenza = this.scadenze.aggiungiGiorniLavorativi(oggi, GIORNI_SCADENZA);
+    }
+    pratica.stato = nuovoStato;
+    return pratica;
+  }
+
+  /** criteri: { testo, stato } entrambi opzionali */
+  cerca(criteri: { testo?: string; stato?: Stato } = {}): Pratica[] {
+    const testo = criteri.testo ? String(criteri.testo).trim().toLowerCase() : '';
+    return this.pratiche.filter((p) => {
+      if (criteri.stato && p.stato !== criteri.stato) {
+        return false;
+      }
+      if (testo && (p.oggetto + ' ' + p.richiedente).toLowerCase().indexOf(testo) === -1) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  contaPerStato(): Record<Stato, number> {
+    const conteggi = {} as Record<Stato, number>;
+    this.stati.forEach((s) => {
+      conteggi[s] = 0;
+    });
+    this.pratiche.forEach((p) => {
+      conteggi[p.stato]++;
+    });
+    return conteggi;
+  }
+}
+</file>

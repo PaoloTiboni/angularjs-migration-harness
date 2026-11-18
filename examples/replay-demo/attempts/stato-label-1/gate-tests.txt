@@ -1,0 +1,43 @@
+Running one project: migrated
+FAIL migrated migrated/src/app/pipes/stato-label.pipe.spec.ts
+  StatoLabelPipe (gold, portato dal filtro AngularJS statoLabel)
+    ✓ traduce tutti gli stati noti (3 ms)
+    ✓ restituisce stringa vuota per valori falsy
+    ✓ restituisce il valore originale per stati sconosciuti (1 ms)
+    ✕ è utilizzabile nei template con il nome "statoLabel" (39 ms)
+
+  ● StatoLabelPipe (gold, portato dal filtro AngularJS statoLabel) › è utilizzabile nei template con il nome "statoLabel"
+
+    NG0302: The pipe 'statoLabel' could not be found in the 'HostComponent' component. Verify that it is included in the '@Component.imports' of this component. Find more at https://angular.dev/errors/NG0302
+
+      at getPipeDef (../node_modules/@angular/core/fesm2022/core.mjs:33360:15)
+      at ɵɵpipe (../node_modules/@angular/core/fesm2022/core.mjs:33301:19)
+      at HostComponent_Template (ng:/HostComponent.js:9:9)
+      at executeTemplate (../node_modules/@angular/core/fesm2022/core.mjs:12668:9)
+      at renderView (../node_modules/@angular/core/fesm2022/core.mjs:13179:13)
+      at renderComponent (../node_modules/@angular/core/fesm2022/core.mjs:13124:5)
+      at renderChildComponents (../node_modules/@angular/core/fesm2022/core.mjs:13227:9)
+      at renderView (../node_modules/@angular/core/fesm2022/core.mjs:13207:13)
+      at ComponentFactory2.create (../node_modules/@angular/core/fesm2022/core.mjs:18298:17)
+      at initComponent (../node_modules/@angular/core/fesm2022/testing.mjs:2053:51)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at Object.onInvoke (../node_modules/@angular/core/fesm2022/core.mjs:6568:33)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at NgZone.run (../node_modules/@angular/core/fesm2022/core.mjs:6414:28)
+      at _TestBedImpl.createComponent (../node_modules/@angular/core/fesm2022/testing.mjs:2058:41)
+      at Function.createComponent (../node_modules/@angular/core/fesm2022/testing.mjs:1844:37)
+      at migrated/src/app/pipes/stato-label.pipe.spec.ts:39:29
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        2.56 s
+Ran all test suites within paths "migrated/src/app/pipes/stato-label.pipe.spec.ts".

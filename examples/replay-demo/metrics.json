@@ -1,0 +1,91 @@
+{
+  "adapter": "replay",
+  "model": null,
+  "startedAt": "2026-11-18T23:31:39.179Z",
+  "maxAttempts": 3,
+  "attempts": [
+    {
+      "unit": "stato-label",
+      "attempt": 1,
+      "agentMs": 1,
+      "gateMs": 4065,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 4556
+    },
+    {
+      "unit": "stato-label",
+      "attempt": 2,
+      "agentMs": 0,
+      "gateMs": 3938,
+      "outcome": "pass",
+      "failedGate": null,
+      "promptChars": 8498
+    },
+    {
+      "unit": "pratiche-service",
+      "attempt": 1,
+      "agentMs": 1,
+      "gateMs": 1109,
+      "outcome": "fail",
+      "failedGate": "typecheck",
+      "promptChars": 24323
+    },
+    {
+      "unit": "pratiche-service",
+      "attempt": 2,
+      "agentMs": 0,
+      "gateMs": 4184,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 30187
+    },
+    {
+      "unit": "pratiche-service",
+      "attempt": 3,
+      "agentMs": 0,
+      "gateMs": 4186,
+      "outcome": "pass",
+      "failedGate": null,
+      "promptChars": 32610
+    }
+  ],
+  "summary": {
+    "units": [
+      {
+        "unit": "stato-label",
+        "attempts": 2,
+        "success": true,
+        "firstTry": false,
+        "totalMs": 8004,
+        "outcomes": [
+          "fail:tests",
+          "pass"
+        ]
+      },
+      {
+        "unit": "pratiche-service",
+        "attempts": 3,
+        "success": true,
+        "firstTry": false,
+        "totalMs": 9480,
+        "outcomes": [
+          "fail:typecheck",
+          "fail:tests",
+          "pass"
+        ]
+      }
+    ],
+    "totals": {
+      "units": 2,
+      "succeeded": 2,
+      "firstTry": 0,
+      "meanAttemptsToSuccess": 2.5,
+      "totalAttempts": 5,
+      "failuresByKind": {
+        "tests": 2,
+        "typecheck": 1
+      }
+    }
+  }
+}

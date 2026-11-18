@@ -30,6 +30,19 @@ describe('ScadenzeService', () => {
       expect(S.aggiungiGiorniLavorativi(new Date(2026, 7, 14), 1)).toEqual(new Date(2026, 7, 17));
     });
 
+    // Nel 2026 il 15/8 cade di sabato: il test sopra non prova il festivo. Questi sì (2025, giorni feriali).
+    it('salta Ferragosto in un anno in cui è feriale (gio 2025-08-14 +1 -> lun 2025-08-18)', () => {
+      expect(S.aggiungiGiorniLavorativi(new Date(2025, 7, 14), 1)).toEqual(new Date(2025, 7, 18));
+    });
+
+    it('salta il 25 aprile 2025 (gio 2025-04-24 +1 -> lun 2025-04-28)', () => {
+      expect(S.aggiungiGiorniLavorativi(new Date(2025, 3, 24), 1)).toEqual(new Date(2025, 3, 28));
+    });
+
+    it('salta il 1 maggio 2025 (mer 2025-04-30 +1 -> ven 2025-05-02)', () => {
+      expect(S.aggiungiGiorniLavorativi(new Date(2025, 3, 30), 1)).toEqual(new Date(2025, 4, 2));
+    });
+
     it('con 0 giorni restituisce la stessa data', () => {
       expect(S.aggiungiGiorniLavorativi(new Date(2026, 5, 1), 0)).toEqual(new Date(2026, 5, 1));
     });
@@ -45,6 +58,17 @@ describe('ScadenzeService', () => {
     it('riconosce festività fisse', () => {
       expect(S.eFestivo(new Date(2026, 0, 1))).toBe(true);
       expect(S.eFestivo(new Date(2026, 11, 25))).toBe(true);
+    });
+
+    it('riconosce tutte le festività fisse (e non i giorni accanto)', () => {
+      const FISSE = [[0, 1], [0, 6], [3, 25], [4, 1], [5, 2], [7, 15], [10, 1], [11, 8], [11, 25], [11, 26]];
+      [2025, 2026, 2027].forEach((anno) => {
+        FISSE.forEach(([m, g]) => {
+          expect(S.eFestivo(new Date(anno, m, g))).toBe(true);
+        });
+      });
+      expect(S.eFestivo(new Date(2025, 7, 14))).toBe(false);
+      expect(S.eFestivo(new Date(2025, 7, 16))).toBe(false);
     });
 
     it('riconosce Pasquetta 2026 e 2025, ma non la domenica di Pasqua', () => {

@@ -1,0 +1,14 @@
+{
+  "descrizione": "Contratto comportamentale di scadenza-badge: stesso insieme di casi per la versione AngularJS e per quella Angular. 'oggi' e 'scadenza' sono [anno, mese0, giorno] (mese 0-based come in JS Date).",
+  "oggi": [2026, 2, 10],
+  "casi": [
+    { "nome": "senza scadenza: trattino e classe nessuna", "scadenza": null, "testo": "—", "classe": "nessuna" },
+    { "nome": "10 giorni: ok", "scadenza": [2026, 2, 20], "testo": "10 giorni", "classe": "ok" },
+    { "nome": "6 giorni: ancora ok", "scadenza": [2026, 2, 16], "testo": "6 giorni", "classe": "ok" },
+    { "nome": "5 giorni: in scadenza", "scadenza": [2026, 2, 15], "testo": "Scade tra 5 giorni", "classe": "in-scadenza" },
+    { "nome": "1 giorno: singolare", "scadenza": [2026, 2, 11], "testo": "Scade tra 1 giorno", "classe": "in-scadenza" },
+    { "nome": "oggi", "scadenza": [2026, 2, 10], "testo": "Scade oggi", "classe": "in-scadenza" },
+    { "nome": "scaduta da 1 giorno: singolare", "scadenza": [2026, 2, 9], "testo": "Scaduta da 1 giorno", "classe": "scaduta" },
+    { "nome": "scaduta da 7 giorni: plurale", "scadenza": [2026, 2, 3], "testo": "Scaduta da 7 giorni", "classe": "scaduta" }
+  ]
+}

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html ng-app="pratiche">
+<head>
+  <meta charset="utf-8">
+  <title>Pratiche (demo AngularJS)</title>
+</head>
+<body ng-controller="MainController">
+  <h1>Pratiche</h1>
+
+  <div class="messaggio" ng-if="messaggio" ng-class="'msg-' + messaggio.tipo">{{messaggio.testo}}</div>
+
+  <pratica-form on-salva="salva(dati)"></pratica-form>
+
+  <pratiche-list pratiche="pratiche" on-seleziona="seleziona(pratica)"></pratiche-list>
+
+  <div class="dettaglio" ng-if="selezionata">
+    <h2>{{selezionata.oggetto}}</h2>
+    <button ng-repeat="s in azioniDisponibili()" ng-click="avanza(s)">{{s | statoLabel}}</button>
+  </div>
+</body>
+</html>

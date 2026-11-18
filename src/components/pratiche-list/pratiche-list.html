@@ -1,0 +1,27 @@
+<div class="pratiche-list">
+  <div class="filtri">
+    <input type="text" class="filtro-testo" ng-model="$ctrl.testo" ng-change="$ctrl.cambiaFiltro()" placeholder="Cerca...">
+    <select class="filtro-stato" ng-model="$ctrl.stato" ng-change="$ctrl.cambiaFiltro()">
+      <option value="">Tutti gli stati</option>
+      <option value="BOZZA">Bozza</option>
+      <option value="PROTOCOLLATA">Protocollata</option>
+      <option value="IN_ISTRUTTORIA">In istruttoria</option>
+      <option value="APPROVATA">Approvata</option>
+      <option value="RESPINTA">Respinta</option>
+      <option value="ANNULLATA">Annullata</option>
+    </select>
+    <button type="button" class="reset" ng-click="$ctrl.resetFiltri()">Azzera</button>
+  </div>
+
+  <p class="vuoto" ng-if="$ctrl.visibili.length === 0">Nessuna pratica</p>
+
+  <ul class="elenco" ng-if="$ctrl.visibili.length > 0">
+    <li class="riga" ng-repeat="p in $ctrl.visibili track by p.id" ng-click="$ctrl.seleziona(p)">
+      <span class="oggetto">{{p.oggetto}}</span>
+      <span class="richiedente">{{p.richiedente}}</span>
+      <span class="stato" ng-class="'stato-' + p.stato">{{p.stato | statoLabel}}</span>
+      <span class="protocollo">{{p.numeroProtocollo || '—'}}</span>
+      <scadenza-badge scadenza="p.scadenza"></scadenza-badge>
+    </li>
+  </ul>
+</div>

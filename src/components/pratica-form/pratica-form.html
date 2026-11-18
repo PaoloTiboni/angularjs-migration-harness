@@ -1,0 +1,18 @@
+<form class="pratica-form" ng-submit="$ctrl.invia()" novalidate>
+  <label>Oggetto
+    <input type="text" name="oggetto" ng-model="$ctrl.dati.oggetto">
+  </label>
+  <span class="errore errore-oggetto" ng-if="$ctrl.tentato && $ctrl.errori.oggetto">{{$ctrl.errori.oggetto}}</span>
+
+  <label>Richiedente
+    <input type="text" name="richiedente" ng-model="$ctrl.dati.richiedente">
+  </label>
+  <span class="errore errore-richiedente" ng-if="$ctrl.tentato && $ctrl.errori.richiedente">{{$ctrl.errori.richiedente}}</span>
+
+  <label>Codice fiscale
+    <input type="text" name="codiceFiscale" ng-model="$ctrl.dati.codiceFiscale">
+  </label>
+  <span class="errore errore-cf" ng-if="$ctrl.tentato && $ctrl.errori.codiceFiscale">{{$ctrl.errori.codiceFiscale}}</span>
+
+  <button type="submit" class="salva">Salva</button>
+</form>

@@ -3,11 +3,11 @@ PASS migrated migrated/src/app/pipes/stato-label.pipe.spec.ts
   StatoLabelPipe (gold, portato dal filtro AngularJS statoLabel)
     ✓ traduce tutti gli stati noti (3 ms)
     ✓ restituisce stringa vuota per valori falsy (1 ms)
-    ✓ restituisce il valore originale per stati sconosciuti
-    ✓ è utilizzabile nei template con il nome "statoLabel" (40 ms)
+    ✓ restituisce il valore originale per stati sconosciuti (1 ms)
+    ✓ è utilizzabile nei template con il nome "statoLabel" (65 ms)
 
 Test Suites: 1 passed, 1 total
 Tests:       4 passed, 4 total
 Snapshots:   0 total
-Time:        2.285 s
+Time:        3.139 s, estimated 4 s
 Ran all test suites within paths "migrated/src/app/pipes/stato-label.pipe.spec.ts".

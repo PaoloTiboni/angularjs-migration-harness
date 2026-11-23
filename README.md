@@ -42,11 +42,26 @@ li fa passare, la migrazione è corretta; quando fallisce, l'agente riceve l'err
 
 ## Fase 3 e 4: il loop dell'agente (fatto) e le metriche
 
+### Primo run reale: ordine consigliato
+
 ```bash
-npm run migrate:replay                 # demo senza modello: fixture scritte a mano
-ANTHROPIC_API_KEY=... npm run migrate -- --adapter anthropic --max-attempts 3
-npm run migrate -- --adapter anthropic --unit stato-label --out runs/prova --apply
+npm install
+npm test                                  # tutto verde (nessuna chiave necessaria)
+npm run doctor                            # controlla Node, strumenti, gate sulla TUA macchina e, se c'è la chiave, l'API
+npm run migrate -- --dry-run              # scrive i prompt in runs/.../prompts/ senza chiamare nessuno (guardali!)
+npm run migrate:replay                    # demo del loop senza modello (fixture scritte a mano)
+
+# con una chiave API (console.anthropic.com), una sola unità per collaudare l'adapter:
+#   PowerShell:  $env:ANTHROPIC_API_KEY="sk-ant-..."      bash/zsh:  export ANTHROPIC_API_KEY="sk-ant-..."
+npm run migrate -- --adapter anthropic --unit stato-label --out runs/prova1
+npm run migrate -- --adapter anthropic --max-attempts 3 --out runs/run1
+# --apply copia in migrated/ i file accettati (rivedi il diff prima di committare)
 ```
+
+Portabilità: i gate lanciano `tsc` e `jest` con `node` direttamente (niente `npx`, che su Windows è `npx.cmd`) e la
+cartella di lavoro collega `node_modules` con una *junction* (i symlink di cartella su Windows richiedono privilegi).
+Sono scelte blindate da test di regressione, ma **non sono mai girate su Windows vero**: `npm run doctor` serve anche a questo.
+
 
 Per ogni unità `pending` di `harness/units.json` (le foglie prima, in ordine di dipendenza):
 
@@ -64,7 +79,7 @@ Per ogni unità `pending` di `harness/units.json` (le foglie prima, in ordine di
 ### Cosa è reale e cosa no (importante)
 
 - **Reale e testato**: ordine di dipendenza, parsing, guardie anti-manomissione, gate tsc+Jest,
-  feedback degli errori, metriche e report (23 test in `harness/__tests__`, mutation-checked).
+  feedback degli errori, metriche e report (30 test in `harness/__tests__`, mutation-checked).
 - **Replay = solo validazione del meccanismo**. Le fixture sono codice scritto da me con errori voluti
   (pipe col nome sbagliato; errore di tipo; transizione mancante). Il report lo dichiara in testa.
   **Non misura nessun modello.**

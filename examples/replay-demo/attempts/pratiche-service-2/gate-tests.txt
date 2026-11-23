@@ -2,34 +2,34 @@ Running one project: migrated
 FAIL migrated migrated/src/app/services/pratiche.service.spec.ts
   PraticheService (gold, portato dal service AngularJS)
     valida
-      ✓ nessun errore con dati completi (14 ms)
-      ✓ segnala i campi obbligatori mancanti (3 ms)
-      ✓ considera vuoti oggetto e richiedente fatti solo di spazi (2 ms)
-      ✓ rifiuta un codice fiscale con formato errato (1 ms)
-      ✓ accetta un codice fiscale in minuscolo (1 ms)
-      ✓ accetta undefined senza lanciare (2 ms)
+      ✓ nessun errore con dati completi (25 ms)
+      ✓ segnala i campi obbligatori mancanti (5 ms)
+      ✓ considera vuoti oggetto e richiedente fatti solo di spazi (4 ms)
+      ✓ rifiuta un codice fiscale con formato errato (3 ms)
+      ✓ accetta un codice fiscale in minuscolo (4 ms)
+      ✓ accetta undefined senza lanciare (3 ms)
     crea
-      ✓ crea una bozza con id progressivo e dati normalizzati (2 ms)
-      ✓ lancia un errore di validazione con code e dettaglio campi (2 ms)
+      ✓ crea una bozza con id progressivo e dati normalizzati (3 ms)
+      ✓ lancia un errore di validazione con code e dettaglio campi (4 ms)
     cambiaStato
-      ✓ BOZZA -> PROTOCOLLATA assegna protocollo, data e scadenza a 30 giorni lavorativi (3 ms)
+      ✓ BOZZA -> PROTOCOLLATA assegna protocollo, data e scadenza a 30 giorni lavorativi (4 ms)
       ✓ i numeri di protocollo sono progressivi per anno e ripartono a nuovo anno (2 ms)
-      ✓ percorso completo fino ad APPROVATA (4 ms)
-      ✕ IN_ISTRUTTORIA può finire anche in RESPINTA (1 ms)
+      ✓ percorso completo fino ad APPROVATA (9 ms)
+      ✕ IN_ISTRUTTORIA può finire anche in RESPINTA (2 ms)
       ✕ mappa completa delle transizioni consentite (4 ms)
       ✓ rifiuta transizioni non consentite (con messaggio e code) (1 ms)
       ✓ gli stati finali non hanno uscite (2 ms)
       ✓ una pratica annullata non si può riaprire e non ha avuto protocollo (5 ms)
       ✓ lancia NON_TROVATA per un id inesistente (2 ms)
-      ✓ transizioniPossibili restituisce una copia (1 ms)
+      ✓ transizioniPossibili restituisce una copia (2 ms)
     cerca
       ✓ senza criteri restituisce tutto (2 ms)
-      ✓ filtra per testo su oggetto e richiedente, senza distinguere maiuscole (2 ms)
-      ✓ filtra per stato (1 ms)
-      ✓ combina testo e stato (2 ms)
-      ✓ il testo di soli spazi non filtra (2 ms)
+      ✓ filtra per testo su oggetto e richiedente, senza distinguere maiuscole (1 ms)
+      ✓ filtra per stato (3 ms)
+      ✓ combina testo e stato (4 ms)
+      ✓ il testo di soli spazi non filtra (4 ms)
     contaPerStato
-      ✓ restituisce tutti gli stati, anche a zero (1 ms)
+      ✓ restituisce tutti gli stati, anche a zero (3 ms)
 
   ● PraticheService (gold, portato dal service AngularJS) › cambiaStato › IN_ISTRUTTORIA può finire anche in RESPINTA
 
@@ -82,5 +82,5 @@ FAIL migrated migrated/src/app/services/pratiche.service.spec.ts
 Test Suites: 1 failed, 1 total
 Tests:       2 failed, 22 passed, 24 total
 Snapshots:   0 total
-Time:        2.535 s
+Time:        3.139 s
 Ran all test suites within paths "migrated/src/app/services/pratiche.service.spec.ts".

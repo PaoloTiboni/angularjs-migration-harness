@@ -6,6 +6,7 @@
  * Uso:
  *   node harness/run.js --adapter replay [--unit stato-label] [--max-attempts 3] [--out dir] [--apply]
  *   ANTHROPIC_API_KEY=... node harness/run.js --adapter anthropic
+ *   node harness/run.js --dry-run [--unit id]     # scrive i prompt senza chiamare nessun agente
  */
 'use strict';
 
@@ -15,7 +16,7 @@ const lib = require('./lib');
 const { createAdapter } = require('./adapters');
 
 function parseArgs(argv) {
-  const o = { adapter: 'replay', maxAttempts: 3, apply: false };
+  const o = { adapter: 'replay', maxAttempts: 3, apply: false, dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--adapter') o.adapter = argv[++i];
@@ -25,6 +26,7 @@ function parseArgs(argv) {
     else if (a === '--fixtures') o.fixtures = argv[++i];
     else if (a === '--model') o.model = argv[++i];
     else if (a === '--apply') o.apply = true;
+    else if (a === '--dry-run') o.dryRun = true;
     else throw new Error('Argomento sconosciuto: ' + a);
   }
   if (!(o.maxAttempts >= 1)) throw new Error('--max-attempts deve essere >= 1');
@@ -125,6 +127,18 @@ async function main() {
     return;
   }
   log('Adapter: ' + adapter.name + ' — unità: ' + units.map((u) => u.id).join(', ') + ' — max tentativi: ' + args.maxAttempts);
+  if (args.dryRun) {
+    // Anteprima: i prompt del primo tentativo. Le dipendenze ancora da migrare non compaiono (non esistono ancora).
+    units.forEach((unit) => {
+      const prompt = lib.buildPrompt({ root, workdir: null, unit, manifest, attempt: 1, previous: null });
+      const file = path.join(outDir, 'prompts', unit.id + '.txt');
+      write(file, prompt);
+      log('  ' + unit.id + ': ' + prompt.length + ' caratteri (~' + Math.round(prompt.length / 4) + ' token) -> ' + file);
+    });
+    log('Dry run: nessun agente chiamato, nessun file migrato modificato.');
+    return;
+  }
+
   lib.createWorkdir(root, workdir, manifest);
 
   const all = [];

@@ -995,23 +995,23 @@ Running one project: migrated
 FAIL migrated migrated/src/app/pages/pagina-pratiche.component.spec.ts
   PaginaPraticheComponent (gold, portato da MainController + index.html)
     stato iniziale
-      ✓ nessun messaggio, nessun dettaglio, lista vuota (100 ms)
-      ✓ espone selezionata null, messaggio null e contatori a zero (13 ms)
+      ✓ nessun messaggio, nessun dettaglio, lista vuota (185 ms)
+      ✓ espone selezionata null, messaggio null e contatori a zero (18 ms)
     salva
-      ✕ compilando il form compare la pratica in lista, il messaggio ok e il contatore sale (19 ms)
-      ✕ più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio) (19 ms)
-      ✓ il form invalido non crea nulla e non mostra messaggi di pagina (12 ms)
-      ✓ salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla (11 ms)
+      ✕ compilando il form compare la pratica in lista, il messaggio ok e il contatore sale (26 ms)
+      ✕ più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio) (45 ms)
+      ✓ il form invalido non crea nulla e non mostra messaggi di pagina (39 ms)
+      ✓ salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla (27 ms)
     selezione e avanzamento
-      ✕ il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili) (12 ms)
-      ✕ avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta) (13 ms)
-      ✕ una transizione non consentita mostra l'errore e lascia lo stato (21 ms)
-      ✕ avanza senza selezione non fa nulla (nemmeno un messaggio) (12 ms)
-      ✕ azioniDisponibili è vuoto senza selezione (13 ms)
+      ✕ il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili) (38 ms)
+      ✕ avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta) (34 ms)
+      ✕ una transizione non consentita mostra l'errore e lascia lo stato (29 ms)
+      ✕ avanza senza selezione non fa nulla (nemmeno un messaggio) (28 ms)
+      ✕ azioniDisponibili è vuoto senza selezione (28 ms)
     timer dei messaggi
-      ✓ nel DOM il messaggio resta per 3 secondi e poi sparisce (13 ms)
-      ✓ il messaggio sparisce dopo esattamente 3 secondi (9 ms)
-      ✓ QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio (13 ms)
+      ✓ nel DOM il messaggio resta per 3 secondi e poi sparisce (30 ms)
+      ✓ il messaggio sparisce dopo esattamente 3 secondi (32 ms)
+      ✓ QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio (23 ms)
 
   ● PaginaPraticheComponent (gold, portato da MainController + index.html) › salva › compilando il form compare la pratica in lista, il messaggio ok e il contatore sale
 

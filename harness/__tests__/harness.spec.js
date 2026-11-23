@@ -4,7 +4,8 @@ const path = require('path');
 
 const lib = require('../lib');
 const { anthropicAdapter, replayAdapter } = require('../adapters');
-const { migrateUnit } = require('../run');
+const { migrateUnit, parseArgs } = require('../run');
+const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
@@ -183,6 +184,15 @@ describe('adapter', () => {
     expect(body.messages).toEqual([{ role: 'user', content: 'ciao' }]);
   });
 
+  it('anthropic: maxTokens opzionale finisce nel body (default 16000)', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ content: [{ type: 'text', text: 'ok' }] }) });
+    const a = anthropicAdapter({ fetchImpl, env: { ANTHROPIC_API_KEY: 'k' } });
+    await a.propose({ prompt: 'x' });
+    await a.propose({ prompt: 'x', maxTokens: 16 });
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body).max_tokens).toBe(16000);
+    expect(JSON.parse(fetchImpl.mock.calls[1][1].body).max_tokens).toBe(16);
+  });
+
   it('anthropic: un errore HTTP diventa un errore con lo status', async () => {
     const fetchImpl = jest.fn().mockResolvedValue({ ok: false, status: 429, text: async () => 'rate limited' });
     const a = anthropicAdapter({ fetchImpl, env: { ANTHROPIC_API_KEY: 'k' } });
@@ -243,5 +253,53 @@ describe('migrateUnit: guardie del loop (senza eseguire i gate)', () => {
     expect(res.records).toHaveLength(1);
     expect(res.records[0]).toMatchObject({ outcome: 'agent_error', detail: 'rete giù' });
     expect(prompts).toHaveLength(1);
+  });
+});
+
+describe('CLI: parseArgs e --dry-run', () => {
+  it('--dry-run è spento di default e si accende con il flag', () => {
+    expect(parseArgs([]).dryRun).toBe(false);
+    expect(parseArgs(['--dry-run']).dryRun).toBe(true);
+  });
+
+  it('rifiuta argomenti sconosciuti e max-attempts non valido', () => {
+    expect(() => parseArgs(['--boh'])).toThrow(/sconosciuto/);
+    expect(() => parseArgs(['--max-attempts', '0'])).toThrow(/>= 1/);
+  });
+
+  it('il dry-run scrive i prompt di tutte le unità senza chiamare agenti né creare la workdir', () => {
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-dry-'));
+    try {
+      const r = spawnSync(process.execPath, [path.join(ROOT, 'harness', 'run.js'), '--dry-run', '--out', out], { encoding: 'utf8' });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('Dry run: nessun agente chiamato');
+      ['stato-label', 'pratiche-service', 'pratica-form', 'pratiche-list', 'pagina-pratiche'].forEach((id) => {
+        expect(fs.existsSync(path.join(out, 'prompts', id + '.txt'))).toBe(true);
+      });
+      expect(fs.existsSync(path.join(ROOT, '.harness-work'))).toBe(false);
+    } finally {
+      fs.rmSync(out, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('portabilità (Windows)', () => {
+  // Su Windows `npx` è `npx.cmd` e spawnSync senza shell fallisce; i symlink di cartella richiedono privilegi.
+  // Qui non si può girare su Windows: si blindano le due scelte che lo rendono portabile.
+  const sorgente = fs.readFileSync(path.join(ROOT, 'harness', 'lib.js'), 'utf8');
+
+  it('lib.js non lancia npx né altri .cmd: usa node con i binari in node_modules', () => {
+    expect(sorgente).not.toMatch(/['"]npx['"]/);
+    expect(sorgente).toMatch(/process\.execPath/);
+  });
+
+  it('node_modules nella workdir si collega con una junction, non con un symlink "dir"', () => {
+    expect(sorgente).toMatch(/'junction'/);
+    expect(sorgente).not.toMatch(/'dir'\)/);
+  });
+
+  it('nodeBin punta a binari che esistono davvero nell\'installazione corrente', () => {
+    expect(fs.existsSync(lib.nodeBin(ROOT, 'typescript', 'bin', 'tsc'))).toBe(true);
+    expect(fs.existsSync(lib.nodeBin(ROOT, 'jest', 'bin', 'jest.js'))).toBe(true);
   });
 });

@@ -1,14 +1,14 @@
 {
   "adapter": "replay",
   "model": null,
-  "startedAt": "2026-11-23T11:45:26.933Z",
+  "startedAt": "2026-11-23T20:23:51.123Z",
   "maxAttempts": 3,
   "attempts": [
     {
       "unit": "stato-label",
       "attempt": 1,
-      "agentMs": 0,
-      "gateMs": 3913,
+      "agentMs": 1,
+      "gateMs": 8318,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 4556
@@ -17,16 +17,16 @@
       "unit": "stato-label",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 3539,
+      "gateMs": 4625,
       "outcome": "pass",
       "failedGate": null,
-      "promptChars": 8499
+      "promptChars": 8507
     },
     {
       "unit": "pratiche-service",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 1067,
+      "gateMs": 1280,
       "outcome": "fail",
       "failedGate": "typecheck",
       "promptChars": 24323
@@ -34,8 +34,8 @@
     {
       "unit": "pratiche-service",
       "attempt": 2,
-      "agentMs": 1,
-      "gateMs": 4139,
+      "agentMs": 0,
+      "gateMs": 4635,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 30187
@@ -44,7 +44,7 @@
       "unit": "pratiche-service",
       "attempt": 3,
       "agentMs": 0,
-      "gateMs": 4245,
+      "gateMs": 4934,
       "outcome": "pass",
       "failedGate": null,
       "promptChars": 32610
@@ -53,7 +53,7 @@
       "unit": "pratica-form",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 4133,
+      "gateMs": 5274,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 15515
@@ -62,7 +62,7 @@
       "unit": "pratica-form",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 4411,
+      "gateMs": 4979,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 20760
@@ -70,17 +70,17 @@
     {
       "unit": "pratica-form",
       "attempt": 3,
-      "agentMs": 0,
-      "gateMs": 4160,
+      "agentMs": 1,
+      "gateMs": 4829,
       "outcome": "pass",
       "failedGate": null,
-      "promptChars": 19304
+      "promptChars": 19289
     },
     {
       "unit": "pratiche-list",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 4376,
+      "gateMs": 5021,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 17579
@@ -89,16 +89,16 @@
       "unit": "pratiche-list",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 4742,
+      "gateMs": 5361,
       "outcome": "pass",
       "failedGate": null,
-      "promptChars": 23988
+      "promptChars": 23977
     },
     {
       "unit": "pagina-pratiche",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 4117,
+      "gateMs": 6157,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 32109
@@ -107,16 +107,16 @@
       "unit": "pagina-pratiche",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 4830,
+      "gateMs": 6138,
       "outcome": "fail",
       "failedGate": "tests",
-      "promptChars": 38738
+      "promptChars": 38739
     },
     {
       "unit": "pagina-pratiche",
       "attempt": 3,
       "agentMs": 0,
-      "gateMs": 4653,
+      "gateMs": 5126,
       "outcome": "pass",
       "failedGate": null,
       "promptChars": 38396
@@ -129,7 +129,7 @@
         "attempts": 2,
         "success": true,
         "firstTry": false,
-        "totalMs": 7452,
+        "totalMs": 12944,
         "outcomes": [
           "fail:tests",
           "pass"
@@ -140,7 +140,7 @@
         "attempts": 3,
         "success": true,
         "firstTry": false,
-        "totalMs": 9452,
+        "totalMs": 10849,
         "outcomes": [
           "fail:typecheck",
           "fail:tests",
@@ -152,7 +152,7 @@
         "attempts": 3,
         "success": true,
         "firstTry": false,
-        "totalMs": 12704,
+        "totalMs": 15083,
         "outcomes": [
           "fail:tests",
           "fail:tests",
@@ -164,7 +164,7 @@
         "attempts": 2,
         "success": true,
         "firstTry": false,
-        "totalMs": 9118,
+        "totalMs": 10382,
         "outcomes": [
           "fail:tests",
           "pass"
@@ -175,7 +175,7 @@
         "attempts": 3,
         "success": true,
         "firstTry": false,
-        "totalMs": 13600,
+        "totalMs": 17421,
         "outcomes": [
           "fail:tests",
           "fail:tests",

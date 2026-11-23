@@ -168,8 +168,13 @@ function createWorkdir(root, workdir, manifest) {
   ['migrated', 'contracts'].forEach((d) =>
     fs.cpSync(path.join(root, d), path.join(workdir, d), { recursive: true })
   );
-  fs.symlinkSync(path.join(root, 'node_modules'), path.join(workdir, 'node_modules'), 'dir');
+  fs.symlinkSync(path.join(root, 'node_modules'), path.join(workdir, 'node_modules'), 'junction');
   return workdir;
+}
+
+/** Percorso di un eseguibile JS di un pacchetto in node_modules (lanciato con `node`, indipendente dall'OS). */
+function nodeBin(cwd, ...rel) {
+  return path.join(cwd, 'node_modules', ...rel);
 }
 
 function run(cmd, args, cwd, timeoutMs) {
@@ -187,14 +192,14 @@ function tail(text, maxLines) {
 /** Esegue i gate in ordine e si ferma al primo che fallisce. */
 function runGates(workdir, unit) {
   const gates = [];
-  const tsc = run('npx', ['tsc', '--noEmit', '-p', 'migrated/tsconfig.spec.json'], workdir, 180000);
+  const tsc = run(process.execPath, [nodeBin(workdir, 'typescript', 'bin', 'tsc'), '--noEmit', '-p', 'migrated/tsconfig.spec.json'], workdir, 180000);
   gates.push({ name: 'typecheck', ok: tsc.ok, ms: tsc.ms, output: tsc.output });
   if (!tsc.ok) return { ok: false, failedGate: 'typecheck', gates };
 
   const spec = unit.goldSpec ? unit.goldSpec.to : null;
-  const jestArgs = ['jest', '--selectProjects', 'migrated', '--ci', '--colors=false'];
+  const jestArgs = [nodeBin(workdir, 'jest', 'bin', 'jest.js'), '--selectProjects', 'migrated', '--ci', '--colors=false'];
   if (spec) jestArgs.push('--runTestsByPath', spec);
-  const jest = run('npx', jestArgs, workdir, 240000);
+  const jest = run(process.execPath, jestArgs, workdir, 240000);
   gates.push({ name: 'tests', ok: jest.ok, ms: jest.ms, output: jest.output });
   if (!jest.ok) return { ok: false, failedGate: 'tests', gates };
   return { ok: true, failedGate: null, gates };
@@ -270,6 +275,8 @@ function renderReport({ adapter, model, startedAt, maxAttempts, summary }) {
 }
 
 module.exports = {
+  nodeBin,
+  run,
   loadManifest,
   pendingInOrder,
   blockedBy,

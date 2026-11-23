@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "migrate": "node harness/run.js",
-    "migrate:replay": "node harness/run.js --adapter replay --out examples/replay-demo"
+    "migrate:replay": "node harness/run.js --adapter replay --out examples/replay-demo",
+    "doctor": "node harness/doctor.js"
   },
   "keywords": [],
   "author": "",

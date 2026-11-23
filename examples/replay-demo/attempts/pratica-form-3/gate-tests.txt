@@ -1,16 +1,16 @@
 Running one project: migrated
 PASS migrated migrated/src/app/components/pratica-form/pratica-form.component.spec.ts
   PraticaFormComponent (gold, portato da AngularJS)
-    ✓ all'inizio non mostra errori (67 ms)
-    ✓ inviando il form vuoto mostra gli errori e non emette (13 ms)
-    ✓ segnala un codice fiscale non valido (14 ms)
-    ✓ con dati validi emette una copia dei dati e azzera il form (11 ms)
-    ✓ dopo un errore e una correzione gli errori spariscono (12 ms)
-    ✓ gli errori compaiono solo dopo il primo tentativo di invio, non mentre si scrive (8 ms)
-    ✓ TRAPPOLA ng-trim: gli spazi ai bordi digitati dall'utente vengono tolti prima di validare ed emettere (12 ms)
+    ✓ all'inizio non mostra errori (101 ms)
+    ✓ inviando il form vuoto mostra gli errori e non emette (19 ms)
+    ✓ segnala un codice fiscale non valido (17 ms)
+    ✓ con dati validi emette una copia dei dati e azzera il form (20 ms)
+    ✓ dopo un errore e una correzione gli errori spariscono (17 ms)
+    ✓ gli errori compaiono solo dopo il primo tentativo di invio, non mentre si scrive (10 ms)
+    ✓ TRAPPOLA ng-trim: gli spazi ai bordi digitati dall'utente vengono tolti prima di validare ed emettere (16 ms)
 
 Test Suites: 1 passed, 1 total
 Tests:       7 passed, 7 total
 Snapshots:   0 total
-Time:        2.449 s, estimated 3 s
+Time:        3.303 s
 Ran all test suites within paths "migrated/src/app/components/pratica-form/pratica-form.component.spec.ts".

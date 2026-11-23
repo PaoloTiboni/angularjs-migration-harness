@@ -38,7 +38,7 @@ function anthropicAdapter({ model, fetchImpl, env }) {
   return {
     name: 'anthropic',
     model: m,
-    async propose({ prompt }) {
+    async propose({ prompt, maxTokens }) {
       const key = e.ANTHROPIC_API_KEY;
       if (!key) throw new Error('ANTHROPIC_API_KEY non impostata nell\'ambiente');
       if (!doFetch) throw new Error('fetch non disponibile (serve Node 18+)');
@@ -49,7 +49,7 @@ function anthropicAdapter({ model, fetchImpl, env }) {
           'x-api-key': key,
           'anthropic-version': '2023-06-01',
         },
-        body: JSON.stringify({ model: m, max_tokens: 16000, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({ model: m, max_tokens: maxTokens || 16000, messages: [{ role: 'user', content: prompt }] }),
       });
       if (!res.ok) {
         const body = await res.text();

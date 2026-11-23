@@ -3,25 +3,25 @@ PASS migrated migrated/src/app/pages/pagina-pratiche.component.spec.ts
   PaginaPraticheComponent (gold, portato da MainController + index.html)
     stato iniziale
       ✓ nessun messaggio, nessun dettaglio, lista vuota (115 ms)
-      ✓ espone selezionata null, messaggio null e contatori a zero (18 ms)
+      ✓ espone selezionata null, messaggio null e contatori a zero (17 ms)
     salva
-      ✓ compilando il form compare la pratica in lista, il messaggio ok e il contatore sale (32 ms)
-      ✓ più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio) (27 ms)
-      ✓ il form invalido non crea nulla e non mostra messaggi di pagina (18 ms)
-      ✓ salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla (20 ms)
+      ✓ compilando il form compare la pratica in lista, il messaggio ok e il contatore sale (31 ms)
+      ✓ più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio) (32 ms)
+      ✓ il form invalido non crea nulla e non mostra messaggi di pagina (16 ms)
+      ✓ salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla (14 ms)
     selezione e avanzamento
-      ✓ il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili) (27 ms)
-      ✓ avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta) (26 ms)
+      ✓ il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili) (20 ms)
+      ✓ avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta) (27 ms)
       ✓ una transizione non consentita mostra l'errore e lascia lo stato (20 ms)
-      ✓ avanza senza selezione non fa nulla (nemmeno un messaggio) (14 ms)
+      ✓ avanza senza selezione non fa nulla (nemmeno un messaggio) (18 ms)
       ✓ azioniDisponibili è vuoto senza selezione (16 ms)
     timer dei messaggi
-      ✓ nel DOM il messaggio resta per 3 secondi e poi sparisce (19 ms)
-      ✓ il messaggio sparisce dopo esattamente 3 secondi (8 ms)
-      ✓ QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio (13 ms)
+      ✓ nel DOM il messaggio resta per 3 secondi e poi sparisce (17 ms)
+      ✓ il messaggio sparisce dopo esattamente 3 secondi (11 ms)
+      ✓ QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio (11 ms)
 
 Test Suites: 1 passed, 1 total
 Tests:       14 passed, 14 total
 Snapshots:   0 total
-Time:        3.098 s
+Time:        3.384 s, estimated 4 s
 Ran all test suites within paths "migrated/src/app/pages/pagina-pratiche.component.spec.ts".

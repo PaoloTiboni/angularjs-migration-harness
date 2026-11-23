@@ -1,0 +1,474 @@
+Migra l'unità "pratiche-list" da AngularJS 1.8 ad Angular 19 (TypeScript, standalone, signals dove sensato).
+REGOLE:
+- Il comportamento deve restare IDENTICO, quirk e bug latenti inclusi: non correggere nulla.
+- Il test Angular qui sotto è il contratto: è di sola lettura e non lo puoi modificare.
+- Scrivi SOLO i file di destinazione elencati. Qualsiasi altro percorso viene rifiutato.
+- Rispondi esclusivamente con blocchi <file path="...">contenuto completo del file</file>, senza altro testo.
+### Note sull'unità
+Componente standalone, selector 'pratiche-list', classe PraticheListComponent, template INLINE nello stesso file .ts. Input 'pratiche', output 'seleziona'. Usa StatoLabelPipe e ScadenzaBadgeComponent già migrati. Mantieni le classi DOM del template legacy (.pratiche-list .filtro-testo .filtro-stato .reset .vuoto .elenco .riga .oggetto .richiedente .stato .stato-<STATO> .protocollo). ATTENZIONE al comportamento legacy: la lista visibile si ricalcola quando l'input 'pratiche' cambia RIFERIMENTO e quando cambiano i filtri dall'utente; NON si aggiorna se l'array viene mutato in place. Preservalo.
+
+### File di destinazione consentiti
+- migrated/src/app/components/pratiche-list/pratiche-list.component.ts
+
+### Sorgente legacy
+<source path="src/components/pratiche-list/pratiche-list.component.js">
+/*
+ * <pratiche-list pratiche="..." on-seleziona="...">
+ * Lista con filtro testuale e per stato. Usa il template esterno (templateUrl).
+ */
+(function () {
+  'use strict';
+
+  angular.module('pratiche').component('praticheList', {
+    templateUrl: 'components/pratiche-list/pratiche-list.html',
+    bindings: {
+      pratiche: '<',
+      onSeleziona: '&'
+    },
+    controller: function () {
+      var ctrl = this;
+
+      ctrl.testo = '';
+      ctrl.stato = '';
+      ctrl.visibili = [];
+
+      function filtra() {
+        var testo = ctrl.testo.trim().toLowerCase();
+        ctrl.visibili = (ctrl.pratiche || []).filter(function (p) {
+          if (ctrl.stato && p.stato !== ctrl.stato) {
+            return false;
+          }
+          if (testo && (p.oggetto + ' ' + p.richiedente).toLowerCase().indexOf(testo) === -1) {
+            return false;
+          }
+          return true;
+        });
+      }
+
+      ctrl.$onChanges = function (changes) {
+        if (changes.pratiche) {
+          filtra();
+        }
+      };
+
+      ctrl.cambiaFiltro = function () {
+        filtra();
+      };
+
+      ctrl.seleziona = function (pratica) {
+        ctrl.onSeleziona({ pratica: pratica });
+      };
+
+      ctrl.resetFiltri = function () {
+        ctrl.testo = '';
+        ctrl.stato = '';
+        filtra();
+      };
+    }
+  });
+})();
+
+</source>
+<source path="src/components/pratiche-list/pratiche-list.html">
+<div class="pratiche-list">
+  <div class="filtri">
+    <input type="text" class="filtro-testo" ng-model="$ctrl.testo" ng-change="$ctrl.cambiaFiltro()" placeholder="Cerca...">
+    <select class="filtro-stato" ng-model="$ctrl.stato" ng-change="$ctrl.cambiaFiltro()">
+      <option value="">Tutti gli stati</option>
+      <option value="BOZZA">Bozza</option>
+      <option value="PROTOCOLLATA">Protocollata</option>
+      <option value="IN_ISTRUTTORIA">In istruttoria</option>
+      <option value="APPROVATA">Approvata</option>
+      <option value="RESPINTA">Respinta</option>
+      <option value="ANNULLATA">Annullata</option>
+    </select>
+    <button type="button" class="reset" ng-click="$ctrl.resetFiltri()">Azzera</button>
+  </div>
+
+  <p class="vuoto" ng-if="$ctrl.visibili.length === 0">Nessuna pratica</p>
+
+  <ul class="elenco" ng-if="$ctrl.visibili.length > 0">
+    <li class="riga" ng-repeat="p in $ctrl.visibili track by p.id" ng-click="$ctrl.seleziona(p)">
+      <span class="oggetto">{{p.oggetto}}</span>
+      <span class="richiedente">{{p.richiedente}}</span>
+      <span class="stato" ng-class="'stato-' + p.stato">{{p.stato | statoLabel}}</span>
+      <span class="protocollo">{{p.numeroProtocollo || '—'}}</span>
+      <scadenza-badge scadenza="p.scadenza"></scadenza-badge>
+    </li>
+  </ul>
+</div>
+
+</source>
+
+### Test legacy (descrivono il comportamento attuale)
+<source path="tests/pratiche-list.component.spec.js">
+const { caricaTemplates } = require('./helpers/templates');
+
+describe('componente praticheList', () => {
+  let $compile;
+  let $rootScope;
+  let scope;
+  let el;
+
+  const P = (id, oggetto, richiedente, stato, extra) =>
+    Object.assign({ id, oggetto, richiedente, stato, numeroProtocollo: null, scadenza: null }, extra);
+
+  beforeEach(() => {
+    angular.mock.module('pratiche', ($provide) => {
+      $provide.value('Orologio', { oggi: () => new Date(2026, 2, 10) });
+    });
+    angular.mock.inject((_$compile_, _$rootScope_, $templateCache) => {
+      $compile = _$compile_;
+      $rootScope = _$rootScope_;
+      caricaTemplates($templateCache);
+    });
+    scope = $rootScope.$new();
+    scope.lista = [
+      P(1, 'Contributo affitto', 'Mario Rossi', 'BOZZA'),
+      P(2, 'Permesso edilizio', 'Anna Verdi', 'PROTOCOLLATA', {
+        numeroProtocollo: '2026/0001',
+        scadenza: new Date(2026, 2, 13)
+      }),
+      P(3, 'Passo carraio', 'Luca Bianchi', 'APPROVATA')
+    ];
+    scope.selezionate = [];
+    el = $compile(
+      '<pratiche-list pratiche="lista" on-seleziona="selezionate.push(pratica)"></pratiche-list>'
+    )(scope);
+    scope.$digest();
+  });
+
+  const righe = () => el.find('li');
+
+  it('mostra tutte le pratiche con oggetto, richiedente e stato leggibile', () => {
+    expect(righe()).toHaveLength(3);
+    const prima = righe().eq(0);
+    expect(prima.find('.oggetto').text()).toBe('Contributo affitto');
+    expect(prima.find('.richiedente').text()).toBe('Mario Rossi');
+    expect(prima.find('.stato').text()).toBe('Bozza');
+    expect(prima.find('.stato').hasClass('stato-BOZZA')).toBe(true);
+  });
+
+  it('mostra il protocollo oppure un trattino', () => {
+    expect(righe().eq(0).find('.protocollo').text()).toBe('—');
+    expect(righe().eq(1).find('.protocollo').text()).toBe('2026/0001');
+  });
+
+  it('include il badge di scadenza', () => {
+    expect(righe().eq(1).find('scadenza-badge').text().trim()).toBe('Scade tra 3 giorni');
+    expect(righe().eq(0).find('scadenza-badge').text().trim()).toBe('—');
+  });
+
+  it('filtra per testo (oggetto o richiedente)', () => {
+    const input = el.find('input');
+    input.val('verdi').triggerHandler('input');
+    scope.$digest();
+    expect(righe()).toHaveLength(1);
+    expect(righe().eq(0).find('.oggetto').text()).toBe('Permesso edilizio');
+  });
+
+  it('filtra per stato', () => {
+    const select = el.find('select');
+    select.val('APPROVATA').triggerHandler('change');
+    scope.$digest();
+    expect(righe()).toHaveLength(1);
+    expect(righe().eq(0).find('.oggetto').text()).toBe('Passo carraio');
+  });
+
+  it('mostra "Nessuna pratica" quando il filtro non trova nulla', () => {
+    el.find('input').val('zzz').triggerHandler('input');
+    scope.$digest();
+    expect(righe()).toHaveLength(0);
+    expect(el.find('p').text()).toBe('Nessuna pratica');
+  });
+
+  it('"Azzera" ripristina i filtri e la lista completa', () => {
+    el.find('input').val('verdi').triggerHandler('input');
+    scope.$digest();
+    el.find('button').triggerHandler('click');
+    scope.$digest();
+    expect(righe()).toHaveLength(3);
+    expect(el.find('input').val()).toBe('');
+  });
+
+  it('"Azzera" ripristina anche il filtro per stato', () => {
+    el.find('select').val('BOZZA').triggerHandler('change');
+    scope.$digest();
+    expect(righe()).toHaveLength(1);
+    el.find('button').triggerHandler('click');
+    scope.$digest();
+    expect(righe()).toHaveLength(3);
+    expect(el.find('select').val()).toBe('');
+  });
+
+  it('il testo di ricerca viene ripulito dagli spazi ai bordi', () => {
+    el.find('input').val('  verdi  ').triggerHandler('input');
+    scope.$digest();
+    expect(righe()).toHaveLength(1);
+    expect(righe().eq(0).find('.oggetto').text()).toBe('Permesso edilizio');
+  });
+
+  it('il click su una riga chiama on-seleziona con la pratica', () => {
+    righe().eq(1).triggerHandler('click');
+    expect(scope.selezionate).toHaveLength(1);
+    expect(scope.selezionate[0].id).toBe(2);
+  });
+
+  it('si aggiorna quando il binding "pratiche" cambia riferimento (le $onChanges)', () => {
+    scope.lista = scope.lista.concat([P(4, 'Nuova', 'Zeta', 'BOZZA')]);
+    scope.$digest();
+    expect(righe()).toHaveLength(4);
+  });
+
+  it('NON si aggiorna se si muta l\'array in place (binding one-way senza watch profondo)', () => {
+    scope.lista.push(P(4, 'Nuova', 'Zeta', 'BOZZA'));
+    scope.$digest();
+    expect(righe()).toHaveLength(3);
+  });
+
+  it('il filtro attivo viene riapplicato quando arriva una nuova lista', () => {
+    el.find('input').val('verdi').triggerHandler('input');
+    scope.$digest();
+    scope.lista = scope.lista.concat([P(4, 'Altro permesso', 'Anna Verdi', 'BOZZA')]);
+    scope.$digest();
+    expect(righe()).toHaveLength(2);
+  });
+});
+
+</source>
+
+### Test Angular da far passare (sola lettura): migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts
+<source path="migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts">
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { Orologio } from '../../services/orologio.service';
+import { PraticheListComponent } from './pratiche-list.component';
+
+// Gold spec portato dal componente AngularJS praticheList.
+// Interagisce solo via DOM e API pubblica (input "pratiche", output "seleziona").
+
+const P = (id: number, oggetto: string, richiedente: string, stato: string, extra: Record<string, unknown> = {}) => ({
+  id,
+  oggetto,
+  richiedente,
+  stato,
+  numeroProtocollo: null,
+  scadenza: null,
+  ...extra,
+});
+
+const LISTA = () => [
+  P(1, 'Contributo affitto', 'Mario Rossi', 'BOZZA'),
+  P(2, 'Permesso edilizio', 'Anna Verdi', 'PROTOCOLLATA', {
+    numeroProtocollo: '2026/0001',
+    scadenza: new Date(2026, 2, 13),
+  }),
+  P(3, 'Passo carraio', 'Luca Bianchi', 'APPROVATA'),
+];
+
+describe('PraticheListComponent (gold, portato da AngularJS)', () => {
+  let fixture: ComponentFixture<PraticheListComponent>;
+  let lista: ReturnType<typeof LISTA>;
+  let selezionate: unknown[];
+
+  const root = () => fixture.nativeElement as HTMLElement;
+  const righe = () => Array.from(root().querySelectorAll('li'));
+  const testo = (el: Element | null | undefined, sel: string) => el?.querySelector(sel)?.textContent?.trim();
+
+  async function stabile() {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  async function scrivi(sel: string, valore: string, evento: 'input' | 'change') {
+    const el = root().querySelector(sel) as HTMLInputElement | HTMLSelectElement;
+    el.value = valore;
+    el.dispatchEvent(new Event(evento));
+    await stabile();
+  }
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [PraticheListComponent],
+      providers: [{ provide: Orologio, useValue: { oggi: () => new Date(2026, 2, 10) } }],
+    });
+    fixture = TestBed.createComponent(PraticheListComponent);
+    lista = LISTA();
+    selezionate = [];
+    fixture.componentRef.setInput('pratiche', lista);
+    fixture.componentInstance.seleziona.subscribe((p: unknown) => selezionate.push(p));
+    await stabile();
+  });
+
+  it('mostra tutte le pratiche con oggetto, richiedente e stato leggibile', () => {
+    expect(righe()).toHaveLength(3);
+    const prima = righe()[0];
+    expect(testo(prima, '.oggetto')).toBe('Contributo affitto');
+    expect(testo(prima, '.richiedente')).toBe('Mario Rossi');
+    expect(testo(prima, '.stato')).toBe('Bozza');
+    expect(prima.querySelector('.stato')?.classList.contains('stato-BOZZA')).toBe(true);
+  });
+
+  it('mostra il protocollo oppure un trattino', () => {
+    expect(testo(righe()[0], '.protocollo')).toBe('—');
+    expect(testo(righe()[1], '.protocollo')).toBe('2026/0001');
+  });
+
+  it('include il badge di scadenza', () => {
+    expect(testo(righe()[1], 'scadenza-badge')).toBe('Scade tra 3 giorni');
+    expect(testo(righe()[0], 'scadenza-badge')).toBe('—');
+  });
+
+  it('filtra per testo (oggetto o richiedente)', async () => {
+    await scrivi('input.filtro-testo', 'verdi', 'input');
+    expect(righe()).toHaveLength(1);
+    expect(testo(righe()[0], '.oggetto')).toBe('Permesso edilizio');
+  });
+
+  it('filtra per stato', async () => {
+    await scrivi('select.filtro-stato', 'APPROVATA', 'change');
+    expect(righe()).toHaveLength(1);
+    expect(testo(righe()[0], '.oggetto')).toBe('Passo carraio');
+  });
+
+  it('mostra "Nessuna pratica" quando il filtro non trova nulla', async () => {
+    await scrivi('input.filtro-testo', 'zzz', 'input');
+    expect(righe()).toHaveLength(0);
+    expect(testo(root(), 'p.vuoto')).toBe('Nessuna pratica');
+    expect(root().querySelector('ul.elenco')).toBeNull();
+  });
+
+  it('"Azzera" ripristina i filtri e la lista completa', async () => {
+    await scrivi('input.filtro-testo', 'verdi', 'input');
+    (root().querySelector('button.reset') as HTMLButtonElement).click();
+    await stabile();
+    expect(righe()).toHaveLength(3);
+    expect((root().querySelector('input.filtro-testo') as HTMLInputElement).value).toBe('');
+    expect((root().querySelector('select.filtro-stato') as HTMLSelectElement).value).toBe('');
+  });
+
+  it('"Azzera" ripristina anche il filtro per stato', async () => {
+    await scrivi('select.filtro-stato', 'BOZZA', 'change');
+    expect(righe()).toHaveLength(1);
+    (root().querySelector('button.reset') as HTMLButtonElement).click();
+    await stabile();
+    expect(righe()).toHaveLength(3);
+    expect((root().querySelector('select.filtro-stato') as HTMLSelectElement).value).toBe('');
+  });
+
+  it('il testo di ricerca viene ripulito dagli spazi ai bordi', async () => {
+    await scrivi('input.filtro-testo', '  verdi  ', 'input');
+    expect(righe()).toHaveLength(1);
+    expect(testo(righe()[0], '.oggetto')).toBe('Permesso edilizio');
+  });
+
+  it('il click su una riga emette "seleziona" con la pratica', () => {
+    (righe()[1] as HTMLElement).click();
+    expect(selezionate).toHaveLength(1);
+    expect((selezionate[0] as { id: number }).id).toBe(2);
+  });
+
+  it('si aggiorna quando l\'input "pratiche" cambia riferimento', async () => {
+    fixture.componentRef.setInput('pratiche', lista.concat([P(4, 'Nuova', 'Zeta', 'BOZZA')]));
+    await stabile();
+    expect(righe()).toHaveLength(4);
+  });
+
+  it('QUIRK preservato: NON si aggiorna se si muta l\'array in place', async () => {
+    lista.push(P(4, 'Nuova', 'Zeta', 'BOZZA'));
+    await stabile();
+    expect(righe()).toHaveLength(3);
+  });
+
+  it('il filtro attivo viene riapplicato quando arriva una nuova lista', async () => {
+    await scrivi('input.filtro-testo', 'verdi', 'input');
+    fixture.componentRef.setInput('pratiche', lista.concat([P(4, 'Altro permesso', 'Anna Verdi', 'BOZZA')]));
+    await stabile();
+    expect(righe()).toHaveLength(2);
+  });
+
+  it('il filtro stato e il filtro testo si combinano', async () => {
+    await scrivi('input.filtro-testo', 'verdi', 'input');
+    await scrivi('select.filtro-stato', 'BOZZA', 'change');
+    expect(righe()).toHaveLength(0);
+  });
+});
+
+</source>
+
+### Dipendenze già migrate (da importare, non da riscrivere)
+<source path="migrated/src/app/pipes/stato-label.pipe.ts">
+import { Pipe, PipeTransform } from '@angular/core';
+
+const ETICHETTE: Record<string, string> = {
+  BOZZA: 'Bozza',
+  PROTOCOLLATA: 'Protocollata',
+  IN_ISTRUTTORIA: 'In istruttoria',
+  APPROVATA: 'Approvata',
+  RESPINTA: 'Respinta',
+  ANNULLATA: 'Annullata',
+};
+
+/** Trasforma il codice di stato in etichetta leggibile (porting del filtro AngularJS statoLabel). */
+@Pipe({ name: 'statoLabel', standalone: true })
+export class StatoLabelPipe implements PipeTransform {
+  transform(stato: string | null | undefined): string {
+    if (!stato) {
+      return '';
+    }
+    // `||` e non `??`: preserva esattamente il comportamento del filtro legacy
+    return ETICHETTE[stato] || stato;
+  }
+}
+
+</source>
+<source path="migrated/src/app/components/scadenza-badge/scadenza-badge.component.ts">
+import { Component, computed, inject, input } from '@angular/core';
+
+import { Orologio } from '../../services/orologio.service';
+import { ScadenzeService } from '../../services/scadenze.service';
+
+interface VistaBadge {
+  classe: 'nessuna' | 'scaduta' | 'in-scadenza' | 'ok';
+  testo: string;
+}
+
+/**
+ * <scadenza-badge [scadenza]="p.scadenza" />
+ *
+ * Comportamento preservato dalla direttiva AngularJS, incluso il quirk: "oggi" viene
+ * letto solo quando cambia `scadenza` (non è un signal), esattamente come il vecchio $watch.
+ */
+@Component({
+  selector: 'scadenza-badge',
+  standalone: true,
+  template: `<span class="badge" [class]="vista().classe">{{ vista().testo }}</span>`,
+})
+export class ScadenzaBadgeComponent {
+  private readonly scadenze = inject(ScadenzeService);
+  private readonly orologio = inject(Orologio);
+
+  readonly scadenza = input<Date | null | undefined>(null);
+
+  readonly vista = computed<VistaBadge>(() => {
+    const scadenza = this.scadenza();
+    if (!scadenza) {
+      return { classe: 'nessuna', testo: '—' };
+    }
+    const giorni = this.scadenze.giorniRimanenti(scadenza, this.orologio.oggi());
+    if (giorni < 0) {
+      const n = Math.abs(giorni);
+      return { classe: 'scaduta', testo: 'Scaduta da ' + n + (n === 1 ? ' giorno' : ' giorni') };
+    }
+    if (giorni <= 5) {
+      return {
+        classe: 'in-scadenza',
+        testo: giorni === 0 ? 'Scade oggi' : 'Scade tra ' + giorni + (giorni === 1 ? ' giorno' : ' giorni'),
+      };
+    }
+    return { classe: 'ok', testo: giorni + ' giorni' };
+  });
+}
+
+</source>

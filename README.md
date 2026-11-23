@@ -64,7 +64,7 @@ Per ogni unità `pending` di `harness/units.json` (le foglie prima, in ordine di
 ### Cosa è reale e cosa no (importante)
 
 - **Reale e testato**: ordine di dipendenza, parsing, guardie anti-manomissione, gate tsc+Jest,
-  feedback degli errori, metriche e report (22 test in `harness/__tests__`, mutation-checked).
+  feedback degli errori, metriche e report (23 test in `harness/__tests__`, mutation-checked).
 - **Replay = solo validazione del meccanismo**. Le fixture sono codice scritto da me con errori voluti
   (pipe col nome sbagliato; errore di tipo; transizione mancante). Il report lo dichiara in testa.
   **Non misura nessun modello.**
@@ -76,10 +76,25 @@ Per ogni unità `pending` di `harness/units.json` (le foglie prima, in ordine di
 - Un bug latente del legacy trovato scrivendo i test: `statoLabel('constructor')` restituisce la funzione
   `Object`. È documentato come quirk nei test legacy e **non corretto**: la migrazione preserva il comportamento.
 
+### Trappole di migrazione trovate scrivendo i test
+
+Sono il motivo per cui i test di caratterizzazione valgono più del "sembra uguale":
+
+| Trappola | Cosa succede | Dove è coperta |
+|---|---|---|
+| `ng-trim` implicito | AngularJS toglie gli spazi ai bordi dei campi di testo; `ngModel` di Angular no. Un CF digitato con spazi passa nel legacy e fallisce nella versione migrata ingenua. | gold spec `pratica-form`, test legacy |
+| Binding `<` e mutazione in place | `push()` sullo stesso array non aggiorna la lista (solo un nuovo riferimento). Un getter "più comodo" la farebbe aggiornare. | gold spec `pratiche-list`, test legacy |
+| Bug latente `statoLabel('constructor')` | Restituisce la funzione `Object`. Preservato, non corretto. | test legacy |
+| Quirk del badge | "oggi" letto solo quando cambia la scadenza. | contratto condiviso `scadenza-badge` |
+| Test vuoto per caso | Il 15/8/2026 è sabato: il test di Ferragosto non provava nulla. L'ha trovato una mutazione. | `scadenze.service` (2025) |
+
+Le mutazioni hanno anche mostrato un test mio che non verificava nulla (copia dei dati emessi dal form,
+mutante equivalente perché il form si azzera): rimosso invece di tenerlo come finta copertura.
+
 ## Prossimi passi
 
-1. **Primo run reale** con una chiave API sul tuo PC, su `stato-label` e `pratiche-service`.
-   Dati veri: tasso di successo, tentativi, dove sbaglia l'agente.
-2. **Più unità**: `pratica-form`, `pratiche-list`, `main.controller` (servono gold spec e migrazione dei template).
-3. **Fase 5, confronto**: stesso set di unità con e senza gate/feedback, e con test nascosti.
+1. **Primo run reale** con una chiave API sul tuo PC (`pratica-form` e `pratiche-list` sono le unità più
+   interessanti: hanno le trappole). Dati veri: tasso di successo, tentativi, dove sbaglia l'agente.
+2. **Ultima unità**: `main.controller` + pagina `index.html` (`$scope`/`$timeout` → componente root con signals).
+3. **Fase 5, confronto**: stesso set con e senza gate/feedback, e con test nascosti.
 4. **Report aggregato** su più run (varianza tra run, costo in token da `usage`).

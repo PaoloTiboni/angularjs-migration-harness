@@ -1,0 +1,41 @@
+Running one project: migrated
+FAIL migrated migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts
+  PraticheListComponent (gold, portato da AngularJS)
+    ✓ mostra tutte le pratiche con oggetto, richiedente e stato leggibile (78 ms)
+    ✓ mostra il protocollo oppure un trattino (11 ms)
+    ✓ include il badge di scadenza (10 ms)
+    ✓ filtra per testo (oggetto o richiedente) (11 ms)
+    ✓ filtra per stato (10 ms)
+    ✓ mostra "Nessuna pratica" quando il filtro non trova nulla (17 ms)
+    ✓ "Azzera" ripristina i filtri e la lista completa (14 ms)
+    ✓ "Azzera" ripristina anche il filtro per stato (13 ms)
+    ✓ il testo di ricerca viene ripulito dagli spazi ai bordi (10 ms)
+    ✓ il click su una riga emette "seleziona" con la pratica (9 ms)
+    ✓ si aggiorna quando l'input "pratiche" cambia riferimento (8 ms)
+    ✕ QUIRK preservato: NON si aggiorna se si muta l'array in place (10 ms)
+    ✓ il filtro attivo viene riapplicato quando arriva una nuova lista (16 ms)
+    ✓ il filtro stato e il filtro testo si combinano (11 ms)
+
+  ● PraticheListComponent (gold, portato da AngularJS) › QUIRK preservato: NON si aggiorna se si muta l'array in place
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 3
+    Received length: 4
+    Received array:  [<li class="riga"><span class="oggetto">Contributo affitto</span><span class="richiedente">Mario Rossi</span><span class="stato stato-BOZZA">Bozza</span><span class="protocollo">—</span><scadenza-badge><span class="badge nessuna">—</span></scadenza-badge></li>, <li class="riga"><span class="oggetto">Permesso edilizio</span><span class="richiedente">Anna Verdi</span><span class="stato stato-PROTOCOLLATA">Protocollata</span><span class="protocollo">2026/0001</span><scadenza-badge ng-reflect-scadenza="Fri Mar 13 2026 00:00:00 GMT+0"><span class="badge in-scadenza">Scade tra 3 giorni</span></scadenza-badge></li>, <li class="riga"><span class="oggetto">Passo carraio</span><span class="richiedente">Luca Bianchi</span><span class="stato stato-APPROVATA">Approvata</span><span class="protocollo">—</span><scadenza-badge><span class="badge nessuna">—</span></scadenza-badge></li>, <li class="riga"><span class="oggetto">Nuova</span><span class="richiedente">Zeta</span><span class="stato stato-BOZZA">Bozza</span><span class="protocollo">—</span><scadenza-badge><span class="badge nessuna">—</span></scadenza-badge></li>]
+
+      138 |     lista.push(P(4, 'Nuova', 'Zeta', 'BOZZA'));
+      139 |     await stabile();
+    > 140 |     expect(righe()).toHaveLength(3);
+          |                     ^
+      141 |   });
+      142 |
+      143 |   it('il filtro attivo viene riapplicato quando arriva una nuova lista', async () => {
+
+      at migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts:140:21
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 13 passed, 14 total
+Snapshots:   0 total
+Time:        3.205 s
+Ran all test suites within paths "migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts".

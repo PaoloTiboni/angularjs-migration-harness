@@ -1,14 +1,14 @@
 {
   "adapter": "replay",
   "model": null,
-  "startedAt": "2026-11-18T23:31:39.179Z",
+  "startedAt": "2026-11-23T11:20:42.406Z",
   "maxAttempts": 3,
   "attempts": [
     {
       "unit": "stato-label",
       "attempt": 1,
-      "agentMs": 1,
-      "gateMs": 4065,
+      "agentMs": 0,
+      "gateMs": 4005,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 4556
@@ -17,16 +17,16 @@
       "unit": "stato-label",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 3938,
+      "gateMs": 3836,
       "outcome": "pass",
       "failedGate": null,
-      "promptChars": 8498
+      "promptChars": 8499
     },
     {
       "unit": "pratiche-service",
       "attempt": 1,
-      "agentMs": 1,
-      "gateMs": 1109,
+      "agentMs": 0,
+      "gateMs": 1059,
       "outcome": "fail",
       "failedGate": "typecheck",
       "promptChars": 24323
@@ -34,8 +34,8 @@
     {
       "unit": "pratiche-service",
       "attempt": 2,
-      "agentMs": 0,
-      "gateMs": 4184,
+      "agentMs": 1,
+      "gateMs": 3633,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 30187
@@ -44,10 +44,55 @@
       "unit": "pratiche-service",
       "attempt": 3,
       "agentMs": 0,
-      "gateMs": 4186,
+      "gateMs": 3548,
       "outcome": "pass",
       "failedGate": null,
       "promptChars": 32610
+    },
+    {
+      "unit": "pratica-form",
+      "attempt": 1,
+      "agentMs": 0,
+      "gateMs": 3715,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 15515
+    },
+    {
+      "unit": "pratica-form",
+      "attempt": 2,
+      "agentMs": 0,
+      "gateMs": 4104,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 20759
+    },
+    {
+      "unit": "pratica-form",
+      "attempt": 3,
+      "agentMs": 0,
+      "gateMs": 4289,
+      "outcome": "pass",
+      "failedGate": null,
+      "promptChars": 19289
+    },
+    {
+      "unit": "pratiche-list",
+      "attempt": 1,
+      "agentMs": 0,
+      "gateMs": 4722,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 17579
+    },
+    {
+      "unit": "pratiche-list",
+      "attempt": 2,
+      "agentMs": 0,
+      "gateMs": 4328,
+      "outcome": "pass",
+      "failedGate": null,
+      "promptChars": 23974
     }
   ],
   "summary": {
@@ -57,7 +102,7 @@
         "attempts": 2,
         "success": true,
         "firstTry": false,
-        "totalMs": 8004,
+        "totalMs": 7841,
         "outcomes": [
           "fail:tests",
           "pass"
@@ -68,22 +113,45 @@
         "attempts": 3,
         "success": true,
         "firstTry": false,
-        "totalMs": 9480,
+        "totalMs": 8241,
         "outcomes": [
           "fail:typecheck",
+          "fail:tests",
+          "pass"
+        ]
+      },
+      {
+        "unit": "pratica-form",
+        "attempts": 3,
+        "success": true,
+        "firstTry": false,
+        "totalMs": 12108,
+        "outcomes": [
+          "fail:tests",
+          "fail:tests",
+          "pass"
+        ]
+      },
+      {
+        "unit": "pratiche-list",
+        "attempts": 2,
+        "success": true,
+        "firstTry": false,
+        "totalMs": 9050,
+        "outcomes": [
           "fail:tests",
           "pass"
         ]
       }
     ],
     "totals": {
-      "units": 2,
-      "succeeded": 2,
+      "units": 4,
+      "succeeded": 4,
       "firstTry": 0,
       "meanAttemptsToSuccess": 2.5,
-      "totalAttempts": 5,
+      "totalAttempts": 10,
       "failuresByKind": {
-        "tests": 2,
+        "tests": 5,
         "typecheck": 1
       }
     }

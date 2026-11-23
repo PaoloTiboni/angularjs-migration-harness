@@ -56,6 +56,13 @@ function pendingInOrder(manifest, only) {
   return pending;
 }
 
+/** Toglie dalla workdir i file di un'unità fallita, così non inquinano le unità indipendenti successive. */
+function discardUnit(workdir, unit) {
+  const files = unit.targets.concat(unit.goldSpec ? [unit.goldSpec.to] : []);
+  files.forEach((f) => fs.rmSync(path.join(workdir, f), { force: true }));
+  return files;
+}
+
 /** Dipendenze di `unit` che sono fallite (o saltate): l'unità non va tentata. */
 function blockedBy(unit, failedIds) {
   return (unit.deps || []).filter((d) => failedIds.has(d));
@@ -266,6 +273,7 @@ module.exports = {
   loadManifest,
   pendingInOrder,
   blockedBy,
+  discardUnit,
   buildPrompt,
   parseFiles,
   createWorkdir,

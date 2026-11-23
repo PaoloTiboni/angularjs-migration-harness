@@ -4,30 +4,51 @@
     {
       "id": "orologio",
       "status": "done",
-      "legacy": ["src/services/orologio.service.js"],
-      "targets": ["migrated/src/app/services/orologio.service.ts"],
+      "legacy": [
+        "src/services/orologio.service.js"
+      ],
+      "targets": [
+        "migrated/src/app/services/orologio.service.ts"
+      ],
       "deps": []
     },
     {
       "id": "scadenze",
       "status": "done",
-      "legacy": ["src/services/scadenze.service.js"],
-      "targets": ["migrated/src/app/services/scadenze.service.ts"],
+      "legacy": [
+        "src/services/scadenze.service.js"
+      ],
+      "targets": [
+        "migrated/src/app/services/scadenze.service.ts"
+      ],
       "deps": []
     },
     {
       "id": "scadenza-badge",
       "status": "done",
-      "legacy": ["src/directives/scadenza-badge.directive.js"],
-      "targets": ["migrated/src/app/components/scadenza-badge/scadenza-badge.component.ts"],
-      "deps": ["orologio", "scadenze"]
+      "legacy": [
+        "src/directives/scadenza-badge.directive.js"
+      ],
+      "targets": [
+        "migrated/src/app/components/scadenza-badge/scadenza-badge.component.ts"
+      ],
+      "deps": [
+        "orologio",
+        "scadenze"
+      ]
     },
     {
       "id": "stato-label",
       "status": "pending",
-      "legacy": ["src/filters/stato-label.filter.js"],
-      "legacyTests": ["tests/stato-label.filter.spec.js"],
-      "targets": ["migrated/src/app/pipes/stato-label.pipe.ts"],
+      "legacy": [
+        "src/filters/stato-label.filter.js"
+      ],
+      "legacyTests": [
+        "tests/stato-label.filter.spec.js"
+      ],
+      "targets": [
+        "migrated/src/app/pipes/stato-label.pipe.ts"
+      ],
       "goldSpec": {
         "from": "harness/gold/stato-label/stato-label.pipe.spec.ts",
         "to": "migrated/src/app/pipes/stato-label.pipe.spec.ts"
@@ -38,15 +59,69 @@
     {
       "id": "pratiche-service",
       "status": "pending",
-      "legacy": ["src/services/pratiche.service.js"],
-      "legacyTests": ["tests/pratiche.service.spec.js"],
-      "targets": ["migrated/src/app/services/pratiche.service.ts"],
+      "legacy": [
+        "src/services/pratiche.service.js"
+      ],
+      "legacyTests": [
+        "tests/pratiche.service.spec.js"
+      ],
+      "targets": [
+        "migrated/src/app/services/pratiche.service.ts"
+      ],
       "goldSpec": {
         "from": "harness/gold/pratiche-service/pratiche.service.spec.ts",
         "to": "migrated/src/app/services/pratiche.service.spec.ts"
       },
-      "deps": ["orologio", "scadenze"],
+      "deps": [
+        "orologio",
+        "scadenze"
+      ],
       "notes": "Service @Injectable({providedIn:'root'}) classe PraticheService, con stato interno in memoria. Usa Orologio e ScadenzeService via inject(). Gli errori sono Error con proprietà 'code' (e 'errori' per la validazione). Non serve il metodo reset() del legacy."
+    },
+    {
+      "id": "pratica-form",
+      "status": "pending",
+      "legacy": [
+        "src/components/pratica-form/pratica-form.component.js",
+        "src/components/pratica-form/pratica-form.html"
+      ],
+      "legacyTests": [
+        "tests/pratica-form.component.spec.js"
+      ],
+      "targets": [
+        "migrated/src/app/components/pratica-form/pratica-form.component.ts"
+      ],
+      "goldSpec": {
+        "from": "harness/gold/pratica-form/pratica-form.component.spec.ts",
+        "to": "migrated/src/app/components/pratica-form/pratica-form.component.spec.ts"
+      },
+      "deps": [
+        "pratiche-service"
+      ],
+      "notes": "Componente standalone, selector 'pratica-form', classe PraticaFormComponent, template INLINE nello stesso file .ts (un solo file di destinazione). Output 'salva' che emette una COPIA dei dati. Deve usare PraticheService.valida. Mantieni nel DOM: <form class=\"pratica-form\">, <input name=\"oggetto|richiedente|codiceFiscale\">, errori in <span class=\"errore errore-oggetto|errore-richiedente|errore-cf\"> mostrati solo dopo il primo tentativo di invio, pulsante .salva. Dopo un invio valido il form e gli errori si azzerano."
+    },
+    {
+      "id": "pratiche-list",
+      "status": "pending",
+      "legacy": [
+        "src/components/pratiche-list/pratiche-list.component.js",
+        "src/components/pratiche-list/pratiche-list.html"
+      ],
+      "legacyTests": [
+        "tests/pratiche-list.component.spec.js"
+      ],
+      "targets": [
+        "migrated/src/app/components/pratiche-list/pratiche-list.component.ts"
+      ],
+      "goldSpec": {
+        "from": "harness/gold/pratiche-list/pratiche-list.component.spec.ts",
+        "to": "migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts"
+      },
+      "deps": [
+        "stato-label",
+        "scadenza-badge"
+      ],
+      "notes": "Componente standalone, selector 'pratiche-list', classe PraticheListComponent, template INLINE nello stesso file .ts. Input 'pratiche', output 'seleziona'. Usa StatoLabelPipe e ScadenzaBadgeComponent già migrati. Mantieni le classi DOM del template legacy (.pratiche-list .filtro-testo .filtro-stato .reset .vuoto .elenco .riga .oggetto .richiedente .stato .stato-<STATO> .protocollo). ATTENZIONE al comportamento legacy: la lista visibile si ricalcola quando l'input 'pratiche' cambia RIFERIMENTO e quando cambiano i filtri dall'utente; NON si aggiorna se l'array viene mutato in place. Preservalo."
     }
   ]
 }

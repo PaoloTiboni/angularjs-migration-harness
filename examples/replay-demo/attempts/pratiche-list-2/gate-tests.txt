@@ -1,0 +1,23 @@
+Running one project: migrated
+PASS migrated migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts
+  PraticheListComponent (gold, portato da AngularJS)
+    ✓ mostra tutte le pratiche con oggetto, richiedente e stato leggibile (88 ms)
+    ✓ mostra il protocollo oppure un trattino (11 ms)
+    ✓ include il badge di scadenza (12 ms)
+    ✓ filtra per testo (oggetto o richiedente) (16 ms)
+    ✓ filtra per stato (16 ms)
+    ✓ mostra "Nessuna pratica" quando il filtro non trova nulla (15 ms)
+    ✓ "Azzera" ripristina i filtri e la lista completa (25 ms)
+    ✓ "Azzera" ripristina anche il filtro per stato (16 ms)
+    ✓ il testo di ricerca viene ripulito dagli spazi ai bordi (14 ms)
+    ✓ il click su una riga emette "seleziona" con la pratica (10 ms)
+    ✓ si aggiorna quando l'input "pratiche" cambia riferimento (8 ms)
+    ✓ QUIRK preservato: NON si aggiorna se si muta l'array in place (7 ms)
+    ✓ il filtro attivo viene riapplicato quando arriva una nuova lista (10 ms)
+    ✓ il filtro stato e il filtro testo si combinano (13 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       14 passed, 14 total
+Snapshots:   0 total
+Time:        2.704 s, estimated 3 s
+Ran all test suites within paths "migrated/src/app/components/pratiche-list/pratiche-list.component.spec.ts".

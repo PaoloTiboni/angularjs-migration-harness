@@ -145,6 +145,7 @@ async function main() {
       if (unit.goldSpec) acceptedAll[unit.goldSpec.to] = fs.readFileSync(path.join(root, unit.goldSpec.from), 'utf8');
     } else {
       failed.add(unit.id);
+      lib.discardUnit(workdir, unit);
       log('  -> unità ' + unit.id + ' non migrata entro ' + args.maxAttempts + ' tentativi; le unità che ne dipendono verranno saltate');
     }
   }

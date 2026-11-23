@@ -85,4 +85,15 @@ describe('componente praticaForm', () => {
     scope.$digest();
     expect(el.find('.errore')).toHaveLength(0);
   });
+
+  it('TRAPPOLA ng-trim: gli spazi ai bordi digitati dall\'utente vengono tolti prima di validare ed emettere', () => {
+    scrivi('oggetto', '  Titolo  ');
+    scrivi('richiedente', ' Mario Rossi ');
+    scrivi('codiceFiscale', '  ' + CF_OK + '  ');
+    invia();
+    expect(el.find('.errore')).toHaveLength(0);
+    expect(scope.salvati).toEqual([
+      { oggetto: 'Titolo', richiedente: 'Mario Rossi', codiceFiscale: CF_OK }
+    ]);
+  });
 });

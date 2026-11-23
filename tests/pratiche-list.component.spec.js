@@ -87,6 +87,23 @@ describe('componente praticheList', () => {
     expect(el.find('input').val()).toBe('');
   });
 
+  it('"Azzera" ripristina anche il filtro per stato', () => {
+    el.find('select').val('BOZZA').triggerHandler('change');
+    scope.$digest();
+    expect(righe()).toHaveLength(1);
+    el.find('button').triggerHandler('click');
+    scope.$digest();
+    expect(righe()).toHaveLength(3);
+    expect(el.find('select').val()).toBe('');
+  });
+
+  it('il testo di ricerca viene ripulito dagli spazi ai bordi', () => {
+    el.find('input').val('  verdi  ').triggerHandler('input');
+    scope.$digest();
+    expect(righe()).toHaveLength(1);
+    expect(righe().eq(0).find('.oggetto').text()).toBe('Permesso edilizio');
+  });
+
   it('il click su una riga chiama on-seleziona con la pratica', () => {
     righe().eq(1).triggerHandler('click');
     expect(scope.selezionate).toHaveLength(1);

@@ -1,0 +1,583 @@
+Migra l'unità "pratica-form" da AngularJS 1.8 ad Angular 19 (TypeScript, standalone, signals dove sensato).
+REGOLE:
+- Il comportamento deve restare IDENTICO, quirk e bug latenti inclusi: non correggere nulla.
+- Il test Angular qui sotto è il contratto: è di sola lettura e non lo puoi modificare.
+- Scrivi SOLO i file di destinazione elencati. Qualsiasi altro percorso viene rifiutato.
+- Rispondi esclusivamente con blocchi <file path="...">contenuto completo del file</file>, senza altro testo.
+### Note sull'unità
+Componente standalone, selector 'pratica-form', classe PraticaFormComponent, template INLINE nello stesso file .ts (un solo file di destinazione). Output 'salva' che emette una COPIA dei dati. Deve usare PraticheService.valida. Mantieni nel DOM: <form class="pratica-form">, <input name="oggetto|richiedente|codiceFiscale">, errori in <span class="errore errore-oggetto|errore-richiedente|errore-cf"> mostrati solo dopo il primo tentativo di invio, pulsante .salva. Dopo un invio valido il form e gli errori si azzerano.
+
+### File di destinazione consentiti
+- migrated/src/app/components/pratica-form/pratica-form.component.ts
+
+### Sorgente legacy
+<source path="src/components/pratica-form/pratica-form.component.js">
+/*
+ * <pratica-form on-salva="...">
+ * Form di inserimento con validazione tramite PraticheService.
+ */
+(function () {
+  'use strict';
+
+  angular.module('pratiche').component('praticaForm', {
+    templateUrl: 'components/pratica-form/pratica-form.html',
+    bindings: {
+      onSalva: '&'
+    },
+    controller: function (PraticheService) {
+      var ctrl = this;
+
+      function vuoto() {
+        return { oggetto: '', richiedente: '', codiceFiscale: '' };
+      }
+
+      ctrl.dati = vuoto();
+      ctrl.errori = {};
+      ctrl.tentato = false;
+
+      ctrl.invia = function () {
+        ctrl.tentato = true;
+        ctrl.errori = PraticheService.valida(ctrl.dati);
+        if (Object.keys(ctrl.errori).length > 0) {
+          return false;
+        }
+        ctrl.onSalva({ dati: angular.copy(ctrl.dati) });
+        ctrl.dati = vuoto();
+        ctrl.errori = {};
+        ctrl.tentato = false;
+        return true;
+      };
+    }
+  });
+})();
+
+</source>
+<source path="src/components/pratica-form/pratica-form.html">
+<form class="pratica-form" ng-submit="$ctrl.invia()" novalidate>
+  <label>Oggetto
+    <input type="text" name="oggetto" ng-model="$ctrl.dati.oggetto">
+  </label>
+  <span class="errore errore-oggetto" ng-if="$ctrl.tentato && $ctrl.errori.oggetto">{{$ctrl.errori.oggetto}}</span>
+
+  <label>Richiedente
+    <input type="text" name="richiedente" ng-model="$ctrl.dati.richiedente">
+  </label>
+  <span class="errore errore-richiedente" ng-if="$ctrl.tentato && $ctrl.errori.richiedente">{{$ctrl.errori.richiedente}}</span>
+
+  <label>Codice fiscale
+    <input type="text" name="codiceFiscale" ng-model="$ctrl.dati.codiceFiscale">
+  </label>
+  <span class="errore errore-cf" ng-if="$ctrl.tentato && $ctrl.errori.codiceFiscale">{{$ctrl.errori.codiceFiscale}}</span>
+
+  <button type="submit" class="salva">Salva</button>
+</form>
+
+</source>
+
+### Test legacy (descrivono il comportamento attuale)
+<source path="tests/pratica-form.component.spec.js">
+const { caricaTemplates } = require('./helpers/templates');
+
+describe('componente praticaForm', () => {
+  let $compile;
+  let $rootScope;
+  let scope;
+  let el;
+
+  const CF_OK = 'RSSMRA80A01H501U';
+
+  const compila = () => {
+    scope = $rootScope.$new();
+    scope.salvati = [];
+    el = $compile('<pratica-form on-salva="salvati.push(dati)"></pratica-form>')(scope);
+    scope.$digest();
+  };
+
+  const scrivi = (name, valore) => {
+    el.find('input[name="' + name + '"]').val(valore).triggerHandler('input');
+  };
+
+  const invia = () => {
+    el.find('form').triggerHandler('submit');
+    scope.$digest();
+  };
+
+  beforeEach(() => {
+    angular.mock.module('pratiche');
+    angular.mock.inject((_$compile_, _$rootScope_, $templateCache) => {
+      $compile = _$compile_;
+      $rootScope = _$rootScope_;
+      caricaTemplates($templateCache);
+    });
+    compila();
+  });
+
+  it('all\'inizio non mostra errori', () => {
+    expect(el.find('.errore')).toHaveLength(0);
+  });
+
+  it('inviando il form vuoto mostra gli errori e non salva', () => {
+    invia();
+    expect(el.find('.errore-oggetto').text()).toBe('Oggetto obbligatorio');
+    expect(el.find('.errore-richiedente').text()).toBe('Richiedente obbligatorio');
+    expect(el.find('.errore-cf').text()).toBe('Codice fiscale obbligatorio');
+    expect(scope.salvati).toHaveLength(0);
+  });
+
+  it('segnala un codice fiscale non valido', () => {
+    scrivi('oggetto', 'Titolo');
+    scrivi('richiedente', 'Mario Rossi');
+    scrivi('codiceFiscale', 'ABC');
+    invia();
+    expect(el.find('.errore')).toHaveLength(1);
+    expect(el.find('.errore-cf').text()).toBe('Codice fiscale non valido');
+    expect(scope.salvati).toHaveLength(0);
+  });
+
+  it('con dati validi chiama on-salva con una copia dei dati e azzera il form', () => {
+    scrivi('oggetto', 'Titolo');
+    scrivi('richiedente', 'Mario Rossi');
+    scrivi('codiceFiscale', CF_OK);
+    invia();
+
+    expect(scope.salvati).toEqual([
+      { oggetto: 'Titolo', richiedente: 'Mario Rossi', codiceFiscale: CF_OK }
+    ]);
+    expect(el.find('input[name="oggetto"]').val()).toBe('');
+    expect(el.find('.errore')).toHaveLength(0);
+  });
+
+  it('dopo un errore e una correzione gli errori spariscono', () => {
+    invia();
+    expect(el.find('.errore').length).toBeGreaterThan(0);
+    scrivi('oggetto', 'Titolo');
+    scrivi('richiedente', 'Mario Rossi');
+    scrivi('codiceFiscale', CF_OK);
+    invia();
+    expect(el.find('.errore')).toHaveLength(0);
+    expect(scope.salvati).toHaveLength(1);
+  });
+
+  it('gli errori compaiono solo dopo il primo tentativo di invio, non mentre si scrive', () => {
+    scrivi('oggetto', 'x');
+    scope.$digest();
+    expect(el.find('.errore')).toHaveLength(0);
+  });
+
+  it('TRAPPOLA ng-trim: gli spazi ai bordi digitati dall\'utente vengono tolti prima di validare ed emettere', () => {
+    scrivi('oggetto', '  Titolo  ');
+    scrivi('richiedente', ' Mario Rossi ');
+    scrivi('codiceFiscale', '  ' + CF_OK + '  ');
+    invia();
+    expect(el.find('.errore')).toHaveLength(0);
+    expect(scope.salvati).toEqual([
+      { oggetto: 'Titolo', richiedente: 'Mario Rossi', codiceFiscale: CF_OK }
+    ]);
+  });
+});
+
+</source>
+
+### Test Angular da far passare (sola lettura): migrated/src/app/components/pratica-form/pratica-form.component.spec.ts
+<source path="migrated/src/app/components/pratica-form/pratica-form.component.spec.ts">
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { PraticaFormComponent } from './pratica-form.component';
+
+// Gold spec portato dal componente AngularJS praticaForm.
+// Interagisce solo via DOM e API pubblica (output "salva").
+
+const CF_OK = 'RSSMRA80A01H501U';
+
+describe('PraticaFormComponent (gold, portato da AngularJS)', () => {
+  let fixture: ComponentFixture<PraticaFormComponent>;
+  let salvati: unknown[];
+
+  const root = () => fixture.nativeElement as HTMLElement;
+  const input = (name: string) => root().querySelector('input[name="' + name + '"]') as HTMLInputElement;
+  const errori = () => root().querySelectorAll('.errore');
+  const testo = (sel: string) => root().querySelector(sel)?.textContent?.trim();
+
+  async function stabile() {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  async function scrivi(name: string, valore: string) {
+    input(name).value = valore;
+    input(name).dispatchEvent(new Event('input'));
+    await stabile();
+  }
+
+  async function invia() {
+    (root().querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    await stabile();
+  }
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({ imports: [PraticaFormComponent] });
+    fixture = TestBed.createComponent(PraticaFormComponent);
+    salvati = [];
+    fixture.componentInstance.salva.subscribe((d: unknown) => salvati.push(d));
+    await stabile();
+  });
+
+  it('all\'inizio non mostra errori', () => {
+    expect(errori()).toHaveLength(0);
+  });
+
+  it('inviando il form vuoto mostra gli errori e non emette', async () => {
+    await invia();
+    expect(testo('.errore-oggetto')).toBe('Oggetto obbligatorio');
+    expect(testo('.errore-richiedente')).toBe('Richiedente obbligatorio');
+    expect(testo('.errore-cf')).toBe('Codice fiscale obbligatorio');
+    expect(salvati).toHaveLength(0);
+  });
+
+  it('segnala un codice fiscale non valido', async () => {
+    await scrivi('oggetto', 'Titolo');
+    await scrivi('richiedente', 'Mario Rossi');
+    await scrivi('codiceFiscale', 'ABC');
+    await invia();
+    expect(errori()).toHaveLength(1);
+    expect(testo('.errore-cf')).toBe('Codice fiscale non valido');
+    expect(salvati).toHaveLength(0);
+  });
+
+  it('con dati validi emette una copia dei dati e azzera il form', async () => {
+    await scrivi('oggetto', 'Titolo');
+    await scrivi('richiedente', 'Mario Rossi');
+    await scrivi('codiceFiscale', CF_OK);
+    await invia();
+
+    expect(salvati).toEqual([{ oggetto: 'Titolo', richiedente: 'Mario Rossi', codiceFiscale: CF_OK }]);
+    expect(input('oggetto').value).toBe('');
+    expect(input('richiedente').value).toBe('');
+    expect(input('codiceFiscale').value).toBe('');
+    expect(errori()).toHaveLength(0);
+  });
+
+  it('dopo un errore e una correzione gli errori spariscono', async () => {
+    await invia();
+    expect(errori().length).toBeGreaterThan(0);
+    await scrivi('oggetto', 'Titolo');
+    await scrivi('richiedente', 'Mario Rossi');
+    await scrivi('codiceFiscale', CF_OK);
+    await invia();
+    expect(errori()).toHaveLength(0);
+    expect(salvati).toHaveLength(1);
+  });
+
+  it('gli errori compaiono solo dopo il primo tentativo di invio, non mentre si scrive', async () => {
+    await scrivi('oggetto', 'x');
+    expect(errori()).toHaveLength(0);
+  });
+
+  it('TRAPPOLA ng-trim: gli spazi ai bordi digitati dall\'utente vengono tolti prima di validare ed emettere', async () => {
+    await scrivi('oggetto', '  Titolo  ');
+    await scrivi('richiedente', ' Mario Rossi ');
+    await scrivi('codiceFiscale', '  ' + CF_OK + '  ');
+    await invia();
+    expect(errori()).toHaveLength(0);
+    expect(salvati).toEqual([{ oggetto: 'Titolo', richiedente: 'Mario Rossi', codiceFiscale: CF_OK }]);
+  });
+});
+
+</source>
+
+### Dipendenze già migrate (da importare, non da riscrivere)
+<source path="migrated/src/app/services/pratiche.service.ts">
+import { Injectable, inject } from '@angular/core';
+
+import { Orologio } from './orologio.service';
+import { ScadenzeService } from './scadenze.service';
+
+export type Stato = 'BOZZA' | 'PROTOCOLLATA' | 'IN_ISTRUTTORIA' | 'APPROVATA' | 'RESPINTA' | 'ANNULLATA';
+
+export interface DatiPratica {
+  oggetto: string;
+  richiedente: string;
+  codiceFiscale: string;
+}
+
+export interface Pratica extends DatiPratica {
+  id: number;
+  stato: Stato;
+  dataCreazione: Date;
+  numeroProtocollo: string | null;
+  dataProtocollo: Date | null;
+  scadenza: Date | null;
+}
+
+export type ErroriValidazione = Partial<Record<keyof DatiPratica, string>>;
+
+export interface ErroreApp extends Error {
+  code: 'VALIDAZIONE' | 'NON_TROVATA' | 'TRANSIZIONE';
+  errori?: ErroriValidazione;
+}
+
+function errore(code: ErroreApp['code'], message: string, errori?: ErroriValidazione): ErroreApp {
+  const e = new Error(message) as ErroreApp;
+  e.code = code;
+  if (errori) {
+    e.errori = errori;
+  }
+  return e;
+}
+
+const TRANSIZIONI: Record<Stato, Stato[]> = {
+  BOZZA: ['PROTOCOLLATA', 'ANNULLATA'],
+  PROTOCOLLATA: ['IN_ISTRUTTORIA', 'ANNULLATA'],
+  IN_ISTRUTTORIA: ['APPROVATA', 'RESPINTA'],
+  APPROVATA: [],
+  RESPINTA: [],
+  ANNULLATA: [],
+};
+
+const GIORNI_SCADENZA = 30;
+const CF_REGEX = /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/;
+
+/**
+ * Gestione in memoria delle pratiche con workflow di stato.
+ * BOZZA -> PROTOCOLLATA -> IN_ISTRUTTORIA -> APPROVATA | RESPINTA
+ * BOZZA e PROTOCOLLATA possono anche andare in ANNULLATA.
+ */
+@Injectable({ providedIn: 'root' })
+export class PraticheService {
+  private readonly orologio = inject(Orologio);
+  private readonly scadenze = inject(ScadenzeService);
+
+  private pratiche: Pratica[] = [];
+  private prossimoId = 1;
+  private contatoriProtocollo: Record<number, number> = {}; // anno -> ultimo numero assegnato
+
+  readonly stati = Object.keys(TRANSIZIONI) as Stato[];
+
+  tutte(): Pratica[] {
+    return this.pratiche;
+  }
+
+  trova(id: number): Pratica | null {
+    return this.pratiche.find((p) => p.id === id) ?? null;
+  }
+
+  /** Ritorna { campo: messaggio }; vuoto se i dati sono validi. */
+  valida(dati?: Partial<DatiPratica> | null): ErroriValidazione {
+    const errori: ErroriValidazione = {};
+    const d = dati || {};
+    if (!d.oggetto || !String(d.oggetto).trim()) {
+      errori.oggetto = 'Oggetto obbligatorio';
+    }
+    if (!d.richiedente || !String(d.richiedente).trim()) {
+      errori.richiedente = 'Richiedente obbligatorio';
+    }
+    if (!d.codiceFiscale) {
+      errori.codiceFiscale = 'Codice fiscale obbligatorio';
+    } else if (!CF_REGEX.test(String(d.codiceFiscale).toUpperCase())) {
+      errori.codiceFiscale = 'Codice fiscale non valido';
+    }
+    return errori;
+  }
+
+  crea(dati: DatiPratica): Pratica {
+    const errori = this.valida(dati);
+    if (Object.keys(errori).length > 0) {
+      throw errore('VALIDAZIONE', 'Dati non validi', errori);
+    }
+    const pratica: Pratica = {
+      id: this.prossimoId++,
+      oggetto: String(dati.oggetto).trim(),
+      richiedente: String(dati.richiedente).trim(),
+      codiceFiscale: String(dati.codiceFiscale).toUpperCase(),
+      stato: 'BOZZA',
+      dataCreazione: this.orologio.oggi(),
+      numeroProtocollo: null,
+      dataProtocollo: null,
+      scadenza: null,
+    };
+    this.pratiche.push(pratica);
+    return pratica;
+  }
+
+  transizioniPossibili(stato: Stato): Stato[] {
+    return (TRANSIZIONI[stato] || []).slice();
+  }
+
+  cambiaStato(id: number, nuovoStato: Stato): Pratica {
+    const pratica = this.trova(id);
+    if (!pratica) {
+      throw errore('NON_TROVATA', 'Pratica non trovata');
+    }
+    if (TRANSIZIONI[pratica.stato].indexOf(nuovoStato) === -1) {
+      throw errore('TRANSIZIONE', 'Transizione non consentita: ' + pratica.stato + ' -> ' + nuovoStato);
+    }
+    if (nuovoStato === 'PROTOCOLLATA') {
+      const oggi = this.orologio.oggi();
+      const anno = oggi.getFullYear();
+      this.contatoriProtocollo[anno] = (this.contatoriProtocollo[anno] || 0) + 1;
+      pratica.numeroProtocollo = anno + '/' + String(this.contatoriProtocollo[anno]).padStart(4, '0');
+      pratica.dataProtocollo = oggi;
+      pratica.scadenza = this.scadenze.aggiungiGiorniLavorativi(oggi, GIORNI_SCADENZA);
+    }
+    pratica.stato = nuovoStato;
+    return pratica;
+  }
+
+  /** criteri: { testo, stato } entrambi opzionali */
+  cerca(criteri: { testo?: string; stato?: Stato } = {}): Pratica[] {
+    const testo = criteri.testo ? String(criteri.testo).trim().toLowerCase() : '';
+    return this.pratiche.filter((p) => {
+      if (criteri.stato && p.stato !== criteri.stato) {
+        return false;
+      }
+      if (testo && (p.oggetto + ' ' + p.richiedente).toLowerCase().indexOf(testo) === -1) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  contaPerStato(): Record<Stato, number> {
+    const conteggi = {} as Record<Stato, number>;
+    this.stati.forEach((s) => {
+      conteggi[s] = 0;
+    });
+    this.pratiche.forEach((p) => {
+      conteggi[p.stato]++;
+    });
+    return conteggi;
+  }
+}
+
+</source>
+
+### Tentativo precedente (1) — FALLITO al gate "tests"
+<source path="migrated/src/app/components/pratica-form/pratica-form.component.ts">
+import { Component, inject, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { DatiPratica, ErroriValidazione, PraticheService } from '../../services/pratiche.service';
+
+const vuoto = (): DatiPratica => ({ oggetto: '', richiedente: '', codiceFiscale: '' });
+
+/** Form di inserimento con validazione tramite PraticheService (porting di praticaForm). */
+@Component({
+  selector: 'pratica-form',
+  standalone: true,
+  imports: [FormsModule],
+  template: `
+    <form class="pratica-form" (ngSubmit)="invia()">
+      <label>Oggetto
+        <input type="text" name="oggetto" [(ngModel)]="dati.oggetto">
+      </label>
+      @if (errori.oggetto) {
+        <span class="errore errore-oggetto">{{ errori.oggetto }}</span>
+      }
+
+      <label>Richiedente
+        <input type="text" name="richiedente" [(ngModel)]="dati.richiedente">
+      </label>
+      @if (errori.richiedente) {
+        <span class="errore errore-richiedente">{{ errori.richiedente }}</span>
+      }
+
+      <label>Codice fiscale
+        <input type="text" name="codiceFiscale" [(ngModel)]="dati.codiceFiscale">
+      </label>
+      @if (errori.codiceFiscale) {
+        <span class="errore errore-cf">{{ errori.codiceFiscale }}</span>
+      }
+
+      <button type="submit" class="salva">Salva</button>
+    </form>
+  `,
+})
+export class PraticaFormComponent {
+  private readonly pratiche = inject(PraticheService);
+
+  readonly salva = output<DatiPratica>();
+
+  dati: DatiPratica = vuoto();
+  get errori(): ErroriValidazione {
+    return this.pratiche.valida(this.dati);
+  }
+  tentato = false;
+
+  invia(): boolean {
+    this.tentato = true;
+    if (Object.keys(this.errori).length > 0) {
+      return false;
+    }
+    this.salva.emit({ ...this.dati });
+    this.dati = vuoto();
+    this.tentato = false;
+    return true;
+  }
+}
+
+</source>
+<errore>
+Running one project: migrated
+FAIL migrated migrated/src/app/components/pratica-form/pratica-form.component.spec.ts
+  PraticaFormComponent (gold, portato da AngularJS)
+    ✕ all'inizio non mostra errori (64 ms)
+    ✓ inviando il form vuoto mostra gli errori e non emette (12 ms)
+    ✓ segnala un codice fiscale non valido (12 ms)
+    ✕ con dati validi emette una copia dei dati e azzera il form (15 ms)
+    ✕ dopo un errore e una correzione gli errori spariscono (11 ms)
+    ✕ gli errori compaiono solo dopo il primo tentativo di invio, non mentre si scrive (10 ms)
+    ✕ TRAPPOLA ng-trim: gli spazi ai bordi digitati dall'utente vengono tolti prima di validare ed emettere (8 ms)
+
+  ● PraticaFormComponent (gold, portato da AngularJS) › all'inizio non mostra errori
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 0
+    Received length: 3
+    Received object: [<span class="errore errore-oggetto">Oggetto obbligatorio</span>, <span class="errore errore-richiedente">Richiedente obbligatorio</span>, <span class="errore errore-cf">Codice fiscale obbligatorio</span>]
+
+      43 |
+      44 |   it('all\'inizio non mostra errori', () => {
+    > 45 |     expect(errori()).toHaveLength(0);
+         |                      ^
+      46 |   });
+      47 |
+      48 |   it('inviando il form vuoto mostra gli errori e non emette', async () => {
+
+      at migrated/src/app/components/pratica-form/pratica-form.component.spec.ts:45:22
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PraticaFormComponent (gold, portato da AngularJS) › con dati validi emette una copia dei dati e azzera il form
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 0
+    Received length: 3
+    Received object: [<span class="errore errore-oggetto">Oggetto obbligatorio</span>, <span class="errore errore-richiedente">Richiedente obbligatorio</span>, <span class="errore errore-cf">Codice fiscale obbligatorio</span>]
+
+      74 |     expect(input('richiedente').value).toBe('');
+      75 |     expect(input('codiceFiscale').value).toBe('');
+    > 76 |     expect(errori()).toHaveLength(0);
+         |                      ^
+      77 |   });
+      78 |
+      79 |   it('dopo un errore e una correzione gli errori spariscono', async () => {
+
+      at migrated/src/app/components/pratica-form/pratica-form.component.spec.ts:76:22
+
+  ● PraticaFormComponent (gold, portato da AngularJS) › dopo un errore e una correzione gli errori spariscono
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 0
+    Received length: 3
+    Received object: [<span class="errore errore-oggetto">Oggetto obbligatorio</span>, <span class="errore errore-richiedente">Richiedente obbligatorio</span>, <span class="errore errore-cf">Codice fiscale obbligatorio</span>]
+
+… (52 righe omesse)
+</errore>
+Correggi il problema senza indebolire il comportamento atteso.

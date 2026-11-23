@@ -1,0 +1,63 @@
+<file path="migrated/src/app/components/pratica-form/pratica-form.component.ts">
+import { Component, inject, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { DatiPratica, ErroriValidazione, PraticheService } from '../../services/pratiche.service';
+
+const vuoto = (): DatiPratica => ({ oggetto: '', richiedente: '', codiceFiscale: '' });
+
+/** Form di inserimento con validazione tramite PraticheService (porting di praticaForm). */
+@Component({
+  selector: 'pratica-form',
+  standalone: true,
+  imports: [FormsModule],
+  template: `
+    <form class="pratica-form" (ngSubmit)="invia()">
+      <label>Oggetto
+        <input type="text" name="oggetto" [(ngModel)]="dati.oggetto">
+      </label>
+      @if (tentato && errori.oggetto) {
+        <span class="errore errore-oggetto">{{ errori.oggetto }}</span>
+      }
+
+      <label>Richiedente
+        <input type="text" name="richiedente" [(ngModel)]="dati.richiedente">
+      </label>
+      @if (tentato && errori.richiedente) {
+        <span class="errore errore-richiedente">{{ errori.richiedente }}</span>
+      }
+
+      <label>Codice fiscale
+        <input type="text" name="codiceFiscale" [(ngModel)]="dati.codiceFiscale">
+      </label>
+      @if (tentato && errori.codiceFiscale) {
+        <span class="errore errore-cf">{{ errori.codiceFiscale }}</span>
+      }
+
+      <button type="submit" class="salva">Salva</button>
+    </form>
+  `,
+})
+export class PraticaFormComponent {
+  private readonly pratiche = inject(PraticheService);
+
+  readonly salva = output<DatiPratica>();
+
+  dati: DatiPratica = vuoto();
+  errori: ErroriValidazione = {};
+  tentato = false;
+
+  invia(): boolean {
+    this.tentato = true;
+    this.errori = this.pratiche.valida(this.dati);
+    if (Object.keys(this.errori).length > 0) {
+      return false;
+    }
+    this.salva.emit({ ...this.dati });
+    this.dati = vuoto();
+    this.errori = {};
+    this.tentato = false;
+    return true;
+  }
+}
+</file>

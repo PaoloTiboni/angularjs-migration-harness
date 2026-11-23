@@ -48,6 +48,26 @@ describe('blockedBy', () => {
   });
 });
 
+describe('discardUnit', () => {
+  it('rimuove target e gold spec dell\'unità fallita e lascia in pace gli altri file', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-discard-'));
+    try {
+      const unit = { id: 'x', targets: ['m/x.ts'], goldSpec: { to: 'm/x.spec.ts' } };
+      ['m/x.ts', 'm/x.spec.ts', 'm/altro.ts'].forEach((f) => {
+        fs.mkdirSync(path.dirname(path.join(tmp, f)), { recursive: true });
+        fs.writeFileSync(path.join(tmp, f), 'x');
+      });
+      expect(lib.discardUnit(tmp, unit)).toEqual(['m/x.ts', 'm/x.spec.ts']);
+      expect(fs.existsSync(path.join(tmp, 'm/x.ts'))).toBe(false);
+      expect(fs.existsSync(path.join(tmp, 'm/x.spec.ts'))).toBe(false);
+      expect(fs.existsSync(path.join(tmp, 'm/altro.ts'))).toBe(true);
+      expect(() => lib.discardUnit(tmp, unit)).not.toThrow(); // idempotente
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('parseFiles', () => {
   const TARGETS = ['migrated/a.ts', 'migrated/b.ts'];
 

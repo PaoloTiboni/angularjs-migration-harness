@@ -15,7 +15,7 @@ describe('manifest e ordine di dipendenza', () => {
   it('il manifest reale si carica e ha dipendenze coerenti', () => {
     const m = lib.loadManifest(ROOT);
     expect(m.units.map((u) => u.id)).toEqual(
-      expect.arrayContaining(['orologio', 'scadenze', 'scadenza-badge', 'stato-label', 'pratiche-service'])
+      expect.arrayContaining(['orologio', 'scadenze', 'scadenza-badge', 'stato-label', 'pratiche-service', 'pratica-form', 'pratiche-list', 'pagina-pratiche'])
     );
   });
 

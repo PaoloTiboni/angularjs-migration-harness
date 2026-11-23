@@ -122,6 +122,32 @@
         "scadenza-badge"
       ],
       "notes": "Componente standalone, selector 'pratiche-list', classe PraticheListComponent, template INLINE nello stesso file .ts. Input 'pratiche', output 'seleziona'. Usa StatoLabelPipe e ScadenzaBadgeComponent già migrati. Mantieni le classi DOM del template legacy (.pratiche-list .filtro-testo .filtro-stato .reset .vuoto .elenco .riga .oggetto .richiedente .stato .stato-<STATO> .protocollo). ATTENZIONE al comportamento legacy: la lista visibile si ricalcola quando l'input 'pratiche' cambia RIFERIMENTO e quando cambiano i filtri dall'utente; NON si aggiorna se l'array viene mutato in place. Preservalo."
+    },
+    {
+      "id": "pagina-pratiche",
+      "status": "pending",
+      "legacy": [
+        "src/controllers/main.controller.js",
+        "src/index.html"
+      ],
+      "legacyTests": [
+        "tests/main.controller.spec.js",
+        "tests/main.page.spec.js"
+      ],
+      "targets": [
+        "migrated/src/app/pages/pagina-pratiche.component.ts"
+      ],
+      "goldSpec": {
+        "from": "harness/gold/pagina-pratiche/pagina-pratiche.component.spec.ts",
+        "to": "migrated/src/app/pages/pagina-pratiche.component.spec.ts"
+      },
+      "deps": [
+        "pratiche-service",
+        "pratica-form",
+        "pratiche-list",
+        "stato-label"
+      ],
+      "notes": "Componente di pagina standalone, selector 'pagina-pratiche', classe PaginaPraticheComponent, template INLINE nello stesso file .ts. Sostituisce MainController + index.html: usa i componenti già migrati (pratica-form, pratiche-list) e PraticheService. API pubblica richiesta dal test (proprietà semplici o signal): selezionata, messaggio ({tipo:'ok'|'errore', testo}), contatori; metodi salva(dati), seleziona(pratica), azioniDisponibili(), avanza(nuovoStato). DOM: .messaggio con classe msg-ok|msg-errore (solo se c'è un messaggio), .dettaglio con <h2> e un <button> per ogni azione con l'etichetta leggibile dello stato. ATTENZIONE: (1) la lista riceve un NUOVO array a ogni cambiamento; (2) i messaggi spariscono dopo 3 secondi con un timer per messaggio che NON viene annullato (comportamento legacy da preservare, anche se sembra un bug)."
     }
   ]
 }

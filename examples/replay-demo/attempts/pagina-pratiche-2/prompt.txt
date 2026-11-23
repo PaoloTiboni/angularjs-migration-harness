@@ -1,0 +1,1056 @@
+Migra l'unità "pagina-pratiche" da AngularJS 1.8 ad Angular 19 (TypeScript, standalone, signals dove sensato).
+REGOLE:
+- Il comportamento deve restare IDENTICO, quirk e bug latenti inclusi: non correggere nulla.
+- Il test Angular qui sotto è il contratto: è di sola lettura e non lo puoi modificare.
+- Scrivi SOLO i file di destinazione elencati. Qualsiasi altro percorso viene rifiutato.
+- Rispondi esclusivamente con blocchi <file path="...">contenuto completo del file</file>, senza altro testo.
+### Note sull'unità
+Componente di pagina standalone, selector 'pagina-pratiche', classe PaginaPraticheComponent, template INLINE nello stesso file .ts. Sostituisce MainController + index.html: usa i componenti già migrati (pratica-form, pratiche-list) e PraticheService. API pubblica richiesta dal test (proprietà semplici o signal): selezionata, messaggio ({tipo:'ok'|'errore', testo}), contatori; metodi salva(dati), seleziona(pratica), azioniDisponibili(), avanza(nuovoStato). DOM: .messaggio con classe msg-ok|msg-errore (solo se c'è un messaggio), .dettaglio con <h2> e un <button> per ogni azione con l'etichetta leggibile dello stato. ATTENZIONE: (1) la lista riceve un NUOVO array a ogni cambiamento; (2) i messaggi spariscono dopo 3 secondi con un timer per messaggio che NON viene annullato (comportamento legacy da preservare, anche se sembra un bug).
+
+### File di destinazione consentiti
+- migrated/src/app/pages/pagina-pratiche.component.ts
+
+### Sorgente legacy
+<source path="src/controllers/main.controller.js">
+/*
+ * Controller di pagina in stile legacy: $scope, funzioni sullo scope, $timeout.
+ */
+(function () {
+  'use strict';
+
+  angular.module('pratiche').controller('MainController', function ($scope, $timeout, PraticheService) {
+    $scope.pratiche = PraticheService.tutte();
+    $scope.selezionata = null;
+    $scope.messaggio = null;
+    $scope.contatori = PraticheService.contaPerStato();
+
+    function aggiornaContatori() {
+      $scope.contatori = PraticheService.contaPerStato();
+    }
+
+    function mostraMessaggio(tipo, testo) {
+      $scope.messaggio = { tipo: tipo, testo: testo };
+      $timeout(function () {
+        $scope.messaggio = null;
+      }, 3000);
+    }
+
+    $scope.salva = function (dati) {
+      try {
+        var p = PraticheService.crea(dati);
+        $scope.pratiche = PraticheService.tutte().slice();
+        aggiornaContatori();
+        mostraMessaggio('ok', 'Pratica ' + p.id + ' creata');
+      } catch (e) {
+        mostraMessaggio('errore', e.message);
+      }
+    };
+
+    $scope.seleziona = function (pratica) {
+      $scope.selezionata = pratica;
+    };
+
+    $scope.azioniDisponibili = function () {
+      if (!$scope.selezionata) {
+        return [];
+      }
+      return PraticheService.transizioniPossibili($scope.selezionata.stato);
+    };
+
+    $scope.avanza = function (nuovoStato) {
+      if (!$scope.selezionata) {
+        return;
+      }
+      try {
+        PraticheService.cambiaStato($scope.selezionata.id, nuovoStato);
+        $scope.pratiche = PraticheService.tutte().slice();
+        aggiornaContatori();
+        mostraMessaggio('ok', 'Stato aggiornato a ' + nuovoStato);
+      } catch (e) {
+        mostraMessaggio('errore', e.message);
+      }
+    };
+  });
+})();
+
+</source>
+<source path="src/index.html">
+<!DOCTYPE html>
+<html ng-app="pratiche">
+<head>
+  <meta charset="utf-8">
+  <title>Pratiche (demo AngularJS)</title>
+</head>
+<body ng-controller="MainController">
+  <h1>Pratiche</h1>
+
+  <div class="messaggio" ng-if="messaggio" ng-class="'msg-' + messaggio.tipo">{{messaggio.testo}}</div>
+
+  <pratica-form on-salva="salva(dati)"></pratica-form>
+
+  <pratiche-list pratiche="pratiche" on-seleziona="seleziona(pratica)"></pratiche-list>
+
+  <div class="dettaglio" ng-if="selezionata">
+    <h2>{{selezionata.oggetto}}</h2>
+    <button ng-repeat="s in azioniDisponibili()" ng-click="avanza(s)">{{s | statoLabel}}</button>
+  </div>
+</body>
+</html>
+
+</source>
+
+### Test legacy (descrivono il comportamento attuale)
+<source path="tests/main.controller.spec.js">
+describe('MainController', () => {
+  let $scope;
+  let $timeout;
+  let Pratiche;
+  const CF_OK = 'RSSMRA80A01H501U';
+  const dati = (extra) => Object.assign(
+    { oggetto: 'Richiesta', richiedente: 'Mario Rossi', codiceFiscale: CF_OK },
+    extra
+  );
+
+  beforeEach(() => {
+    angular.mock.module('pratiche', ($provide) => {
+      $provide.value('Orologio', { oggi: () => new Date(2026, 2, 2) });
+    });
+    angular.mock.inject(($controller, $rootScope, _$timeout_, PraticheService) => {
+      Pratiche = PraticheService;
+      Pratiche.reset();
+      $timeout = _$timeout_;
+      $scope = $rootScope.$new();
+      $controller('MainController', { $scope });
+    });
+  });
+
+  it('stato iniziale: nessuna pratica, nessuna selezione, contatori a zero', () => {
+    expect($scope.pratiche).toEqual([]);
+    expect($scope.selezionata).toBeNull();
+    expect($scope.messaggio).toBeNull();
+    expect($scope.contatori.BOZZA).toBe(0);
+  });
+
+  describe('salva', () => {
+    it('crea la pratica, aggiorna lista e contatori e mostra un messaggio ok', () => {
+      $scope.salva(dati());
+      expect($scope.pratiche).toHaveLength(1);
+      expect($scope.contatori.BOZZA).toBe(1);
+      expect($scope.messaggio).toEqual({ tipo: 'ok', testo: 'Pratica 1 creata' });
+    });
+
+    it('la lista è un nuovo array a ogni salvataggio (serve al binding one-way del componente)', () => {
+      const prima = $scope.pratiche;
+      $scope.salva(dati());
+      expect($scope.pratiche).not.toBe(prima);
+    });
+
+    it('con dati non validi mostra un messaggio di errore e non crea nulla', () => {
+      $scope.salva({});
+      expect($scope.pratiche).toHaveLength(0);
+      expect($scope.messaggio).toEqual({ tipo: 'errore', testo: 'Dati non validi' });
+    });
+
+    it('il messaggio sparisce dopo 3 secondi', () => {
+      $scope.salva(dati());
+      $timeout.flush(2999);
+      expect($scope.messaggio).not.toBeNull();
+      $timeout.flush(1);
+      expect($scope.messaggio).toBeNull();
+    });
+  });
+
+  describe('selezione e avanzamento', () => {
+    beforeEach(() => {
+      $scope.salva(dati());
+      $timeout.flush();
+      $scope.seleziona($scope.pratiche[0]);
+    });
+
+    it('azioniDisponibili riflette le transizioni dello stato corrente', () => {
+      expect($scope.azioniDisponibili()).toEqual(['PROTOCOLLATA', 'ANNULLATA']);
+    });
+
+    it('azioniDisponibili è vuoto senza selezione', () => {
+      $scope.seleziona(null);
+      expect($scope.azioniDisponibili()).toEqual([]);
+    });
+
+    it('avanza cambia stato, aggiorna i contatori e mostra il messaggio', () => {
+      $scope.avanza('PROTOCOLLATA');
+      expect($scope.selezionata.stato).toBe('PROTOCOLLATA');
+      expect($scope.contatori.PROTOCOLLATA).toBe(1);
+      expect($scope.contatori.BOZZA).toBe(0);
+      expect($scope.messaggio).toEqual({ tipo: 'ok', testo: 'Stato aggiornato a PROTOCOLLATA' });
+    });
+
+    it('avanza con transizione non consentita mostra l\'errore e lascia lo stato', () => {
+      $scope.avanza('APPROVATA');
+      expect($scope.selezionata.stato).toBe('BOZZA');
+      expect($scope.messaggio.tipo).toBe('errore');
+      expect($scope.messaggio.testo).toBe('Transizione non consentita: BOZZA -> APPROVATA');
+    });
+
+    it('avanza senza selezione non fa nulla', () => {
+      $scope.seleziona(null);
+      $scope.avanza('PROTOCOLLATA');
+      expect($scope.messaggio).toBeNull();
+      expect($scope.contatori.PROTOCOLLATA).toBe(0);
+    });
+  });
+});
+
+</source>
+<source path="tests/main.page.spec.js">
+const fs = require('fs');
+const path = require('path');
+const { caricaTemplates } = require('./helpers/templates');
+
+// Test di integrazione della pagina: index.html (senza il tag <body>) + MainController + componenti reali.
+describe('pagina Pratiche (index.html + MainController)', () => {
+  const CF_OK = 'RSSMRA80A01H501U';
+  let scope;
+  let $timeout;
+  let el;
+
+  const q = (sel) => el.find(sel);
+  const digest = () => scope.$digest();
+
+  function scrivi(name, valore) {
+    q('input[name="' + name + '"]').val(valore).triggerHandler('input');
+  }
+
+  function creaDaForm(oggetto) {
+    scrivi('oggetto', oggetto || 'Richiesta contributo');
+    scrivi('richiedente', 'Mario Rossi');
+    scrivi('codiceFiscale', CF_OK);
+    q('form').triggerHandler('submit');
+    digest();
+  }
+
+  const bottoni = () => q('.dettaglio button').toArray().map((b) => b.textContent.trim());
+
+  beforeEach(() => {
+    angular.mock.module('pratiche', ($provide) => {
+      $provide.value('Orologio', { oggi: () => new Date(2026, 2, 2) });
+    });
+    angular.mock.inject(($compile, $rootScope, _$timeout_, $templateCache) => {
+      $timeout = _$timeout_;
+      caricaTemplates($templateCache);
+      const html = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.html'), 'utf8');
+      const body = new DOMParser().parseFromString(html, 'text/html').body.innerHTML;
+      scope = $rootScope.$new();
+      el = $compile('<div ng-controller="MainController">' + body + '</div>')(scope);
+      scope.$digest();
+    });
+  });
+
+  it('stato iniziale: nessun messaggio, nessun dettaglio, lista vuota', () => {
+    expect(q('.messaggio')).toHaveLength(0);
+    expect(q('.dettaglio')).toHaveLength(0);
+    expect(q('p.vuoto').text()).toBe('Nessuna pratica');
+  });
+
+  it('compilando il form compare la pratica in lista e un messaggio ok', () => {
+    creaDaForm('Richiesta contributo');
+    expect(q('li')).toHaveLength(1);
+    expect(q('li .oggetto').text()).toBe('Richiesta contributo');
+    expect(q('li .stato').text()).toBe('Bozza');
+    expect(q('.messaggio').text()).toBe('Pratica 1 creata');
+    expect(q('.messaggio').hasClass('msg-ok')).toBe(true);
+    expect(q('.messaggio').hasClass('msg-errore')).toBe(false);
+  });
+
+  it('il messaggio sparisce dopo 3 secondi', () => {
+    creaDaForm();
+    $timeout.flush(2999);
+    expect(q('.messaggio')).toHaveLength(1);
+    $timeout.flush(1);
+    expect(q('.messaggio')).toHaveLength(0);
+  });
+
+  it('cliccando una riga compare il dettaglio con le azioni possibili (etichette leggibili)', () => {
+    creaDaForm('Richiesta contributo');
+    q('li').eq(0).triggerHandler('click');
+    expect(q('.dettaglio h2').text()).toBe('Richiesta contributo');
+    expect(bottoni()).toEqual(['Protocollata', 'Annullata']);
+  });
+
+  it('avanzare di stato aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l\'etichetta)', () => {
+    creaDaForm();
+    q('li').eq(0).triggerHandler('click');
+    q('.dettaglio button').eq(0).triggerHandler('click');
+    expect(q('li .stato').text()).toBe('Protocollata');
+    expect(q('li .protocollo').text()).toBe('2026/0001');
+    expect(bottoni()).toEqual(['In istruttoria', 'Annullata']);
+    expect(q('.messaggio').text()).toBe('Stato aggiornato a PROTOCOLLATA');
+  });
+
+  it('il form invalido non crea nulla e non mostra messaggi di pagina', () => {
+    q('form').triggerHandler('submit');
+    digest();
+    expect(q('li')).toHaveLength(0);
+    expect(q('.messaggio')).toHaveLength(0);
+    expect(q('.errore').length).toBeGreaterThan(0);
+  });
+
+  it('una transizione non consentita mostra un messaggio di errore', () => {
+    creaDaForm();
+    q('li').eq(0).triggerHandler('click');
+    scope.$$childHead.avanza('APPROVATA');
+    digest();
+    expect(q('.messaggio').text()).toBe('Transizione non consentita: BOZZA -> APPROVATA');
+    expect(q('.messaggio').hasClass('msg-errore')).toBe(true);
+    expect(q('li .stato').text()).toBe('Bozza');
+  });
+
+  it('QUIRK: i timer dei messaggi non si annullano; il primo cancella in anticipo il secondo messaggio', () => {
+    creaDaForm('Prima');
+    $timeout.flush(2000);
+    creaDaForm('Seconda');
+    expect(q('.messaggio').text()).toBe('Pratica 2 creata');
+    $timeout.flush(1000); // t=3000: scade il timer del PRIMO messaggio
+    expect(q('.messaggio')).toHaveLength(0); // il secondo ha vissuto solo 1 secondo
+    $timeout.flush(2000); // scade il timer del secondo: nessun effetto visibile
+    expect(q('.messaggio')).toHaveLength(0);
+  });
+});
+
+</source>
+
+### Test Angular da far passare (sola lettura): migrated/src/app/pages/pagina-pratiche.component.spec.ts
+<source path="migrated/src/app/pages/pagina-pratiche.component.spec.ts">
+import { ComponentFixture, TestBed, fakeAsync, flush, flushMicrotasks, tick } from '@angular/core/testing';
+
+import { Orologio } from '../services/orologio.service';
+import { PaginaPraticheComponent } from './pagina-pratiche.component';
+
+// Gold spec portato da MainController + index.html (tests/main.controller.spec.js e tests/main.page.spec.js).
+// Contratto: API pubblica del componente + DOM. Le proprietà possono essere valori semplici o signal.
+
+const CF_OK = 'RSSMRA80A01H501U';
+const dati = (extra: Record<string, unknown> = {}) =>
+  ({ oggetto: 'Richiesta', richiedente: 'Mario Rossi', codiceFiscale: CF_OK, ...extra }) as never;
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const leggi = (c: any, chiave: string) => (typeof c[chiave] === 'function' ? c[chiave]() : c[chiave]);
+
+describe('PaginaPraticheComponent (gold, portato da MainController + index.html)', () => {
+  let fixture: ComponentFixture<PaginaPraticheComponent>;
+
+  const comp = () => fixture.componentInstance as any;
+  const root = () => fixture.nativeElement as HTMLElement;
+  const $ = (sel: string) => root().querySelector(sel) as HTMLElement | null;
+  const $$ = (sel: string) => Array.from(root().querySelectorAll(sel)) as HTMLElement[];
+  const bottoni = () => $$('.dettaglio button').map((b) => b.textContent?.trim());
+
+  // NB: dentro fakeAsync il tempo è sotto controllo. fixture.whenStable() aspetterebbe anche il timer
+  // da 3 secondi dei messaggi, facendoli sparire prima delle asserzioni.
+  function stabile() {
+    fixture.detectChanges();
+    flushMicrotasks(); // le scritture asincrone di ngModel
+    fixture.detectChanges();
+  }
+
+  function scrivi(name: string, valore: string) {
+    const input = $('input[name="' + name + '"]') as HTMLInputElement;
+    input.value = valore;
+    input.dispatchEvent(new Event('input'));
+    stabile();
+  }
+
+  function creaDaForm(oggetto = 'Richiesta contributo') {
+    scrivi('oggetto', oggetto);
+    scrivi('richiedente', 'Mario Rossi');
+    scrivi('codiceFiscale', CF_OK);
+    $('form')!.dispatchEvent(new Event('submit'));
+    stabile();
+  }
+
+  /** Test in fakeAsync; a fine test si svuotano i timer rimasti (i messaggi da 3s). */
+  const prova = (nome: string, fn: () => void) =>
+    it(
+      nome,
+      fakeAsync(() => {
+        fn();
+        flush();
+      }),
+    );
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      imports: [PaginaPraticheComponent],
+      providers: [{ provide: Orologio, useValue: { oggi: () => new Date(2026, 2, 2) } }],
+    });
+    fixture = TestBed.createComponent(PaginaPraticheComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  describe('stato iniziale', () => {
+    it('nessun messaggio, nessun dettaglio, lista vuota', () => {
+      expect($('.messaggio')).toBeNull();
+      expect($('.dettaglio')).toBeNull();
+      expect($('p.vuoto')?.textContent?.trim()).toBe('Nessuna pratica');
+    });
+
+    it('espone selezionata null, messaggio null e contatori a zero', () => {
+      expect(leggi(comp(), 'selezionata')).toBeNull();
+      expect(leggi(comp(), 'messaggio')).toBeNull();
+      expect(leggi(comp(), 'contatori').BOZZA).toBe(0);
+    });
+  });
+
+  describe('salva', () => {
+    prova('compilando il form compare la pratica in lista, il messaggio ok e il contatore sale', () => {
+      creaDaForm('Richiesta contributo');
+      expect($$('li')).toHaveLength(1);
+      expect($('li .oggetto')?.textContent?.trim()).toBe('Richiesta contributo');
+      expect($('li .stato')?.textContent?.trim()).toBe('Bozza');
+      expect($('.messaggio')?.textContent?.trim()).toBe('Pratica 1 creata');
+      expect($('.messaggio')?.classList.contains('msg-ok')).toBe(true);
+      expect($('.messaggio')?.classList.contains('msg-errore')).toBe(false);
+      expect(leggi(comp(), 'contatori').BOZZA).toBe(1);
+    });
+
+    prova('più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio)', () => {
+      creaDaForm('Prima');
+      creaDaForm('Seconda');
+      expect($$('li')).toHaveLength(2);
+      expect($$('li .oggetto').map((e) => e.textContent?.trim())).toEqual(['Prima', 'Seconda']);
+    });
+
+    prova('il form invalido non crea nulla e non mostra messaggi di pagina', () => {
+      $('form')!.dispatchEvent(new Event('submit'));
+      stabile();
+      expect($$('li')).toHaveLength(0);
+      expect($('.messaggio')).toBeNull();
+      expect($$('.errore').length).toBeGreaterThan(0);
+    });
+
+    prova('salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla', () => {
+      comp().salva({});
+      stabile();
+      expect($('.messaggio')?.textContent?.trim()).toBe('Dati non validi');
+      expect($('.messaggio')?.classList.contains('msg-errore')).toBe(true);
+      expect($$('li')).toHaveLength(0);
+      expect(leggi(comp(), 'messaggio')).toEqual({ tipo: 'errore', testo: 'Dati non validi' });
+    });
+  });
+
+  describe('selezione e avanzamento', () => {
+    /** Crea una pratica dal form e la seleziona. Da chiamare dentro un test fakeAsync. */
+    function conSelezione() {
+      creaDaForm('Richiesta contributo');
+      ($$('li')[0] as HTMLElement).click();
+      stabile();
+    }
+
+    prova('il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili)', () => {
+      conSelezione();
+      expect($('.dettaglio h2')?.textContent?.trim()).toBe('Richiesta contributo');
+      expect(bottoni()).toEqual(['Protocollata', 'Annullata']);
+      expect(comp().azioniDisponibili()).toEqual(['PROTOCOLLATA', 'ANNULLATA']);
+    });
+
+    prova('avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l\'etichetta)', () => {
+      conSelezione();
+      ($$('.dettaglio button')[0] as HTMLElement).click();
+      stabile();
+      expect($('li .stato')?.textContent?.trim()).toBe('Protocollata');
+      expect($('li .protocollo')?.textContent?.trim()).toBe('2026/0001');
+      expect(bottoni()).toEqual(['In istruttoria', 'Annullata']);
+      expect($('.messaggio')?.textContent?.trim()).toBe('Stato aggiornato a PROTOCOLLATA');
+      expect(leggi(comp(), 'contatori')).toMatchObject({ BOZZA: 0, PROTOCOLLATA: 1 });
+    });
+
+    prova('una transizione non consentita mostra l\'errore e lascia lo stato', () => {
+      conSelezione();
+      comp().avanza('APPROVATA');
+      stabile();
+      expect($('.messaggio')?.textContent?.trim()).toBe('Transizione non consentita: BOZZA -> APPROVATA');
+      expect($('.messaggio')?.classList.contains('msg-errore')).toBe(true);
+      expect($('li .stato')?.textContent?.trim()).toBe('Bozza');
+    });
+
+    prova('avanza senza selezione non fa nulla (nemmeno un messaggio)', () => {
+      conSelezione();
+      comp().seleziona(null);
+      stabile();
+      expect($('.dettaglio')).toBeNull();
+      comp().avanza('PROTOCOLLATA');
+      stabile();
+      expect(leggi(comp(), 'contatori').PROTOCOLLATA).toBe(0);
+      expect($('.messaggio')?.textContent?.trim()).toBe('Pratica 1 creata'); // quello di prima, non uno nuovo
+    });
+
+    prova('azioniDisponibili è vuoto senza selezione', () => {
+      conSelezione();
+      comp().seleziona(null);
+      expect(comp().azioniDisponibili()).toEqual([]);
+    });
+  });
+
+  describe('timer dei messaggi', () => {
+    prova('nel DOM il messaggio resta per 3 secondi e poi sparisce', () => {
+      creaDaForm();
+      tick(2999);
+      fixture.detectChanges();
+      expect($('.messaggio')).not.toBeNull();
+      tick(1);
+      fixture.detectChanges();
+      expect($('.messaggio')).toBeNull();
+    });
+
+    it('il messaggio sparisce dopo esattamente 3 secondi', fakeAsync(() => {
+      comp().salva(dati());
+      expect(leggi(comp(), 'messaggio')).toEqual({ tipo: 'ok', testo: 'Pratica 1 creata' });
+      tick(2999);
+      expect(leggi(comp(), 'messaggio')).not.toBeNull();
+      tick(1);
+      expect(leggi(comp(), 'messaggio')).toBeNull();
+      flush();
+    }));
+
+    it('QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio', fakeAsync(() => {
+      comp().salva(dati());
+      tick(2000);
+      comp().salva(dati());
+      expect(leggi(comp(), 'messaggio')).toEqual({ tipo: 'ok', testo: 'Pratica 2 creata' });
+      tick(1000); // t=3000: scade il timer del PRIMO messaggio
+      expect(leggi(comp(), 'messaggio')).toBeNull(); // il secondo ha vissuto solo 1 secondo
+      tick(2000); // scade il timer del secondo: nessun effetto visibile
+      expect(leggi(comp(), 'messaggio')).toBeNull();
+      flush();
+    }));
+  });
+});
+
+</source>
+
+### Dipendenze già migrate (da importare, non da riscrivere)
+<source path="migrated/src/app/services/pratiche.service.ts">
+import { Injectable, inject } from '@angular/core';
+
+import { Orologio } from './orologio.service';
+import { ScadenzeService } from './scadenze.service';
+
+export type Stato = 'BOZZA' | 'PROTOCOLLATA' | 'IN_ISTRUTTORIA' | 'APPROVATA' | 'RESPINTA' | 'ANNULLATA';
+
+export interface DatiPratica {
+  oggetto: string;
+  richiedente: string;
+  codiceFiscale: string;
+}
+
+export interface Pratica extends DatiPratica {
+  id: number;
+  stato: Stato;
+  dataCreazione: Date;
+  numeroProtocollo: string | null;
+  dataProtocollo: Date | null;
+  scadenza: Date | null;
+}
+
+export type ErroriValidazione = Partial<Record<keyof DatiPratica, string>>;
+
+export interface ErroreApp extends Error {
+  code: 'VALIDAZIONE' | 'NON_TROVATA' | 'TRANSIZIONE';
+  errori?: ErroriValidazione;
+}
+
+function errore(code: ErroreApp['code'], message: string, errori?: ErroriValidazione): ErroreApp {
+  const e = new Error(message) as ErroreApp;
+  e.code = code;
+  if (errori) {
+    e.errori = errori;
+  }
+  return e;
+}
+
+const TRANSIZIONI: Record<Stato, Stato[]> = {
+  BOZZA: ['PROTOCOLLATA', 'ANNULLATA'],
+  PROTOCOLLATA: ['IN_ISTRUTTORIA', 'ANNULLATA'],
+  IN_ISTRUTTORIA: ['APPROVATA', 'RESPINTA'],
+  APPROVATA: [],
+  RESPINTA: [],
+  ANNULLATA: [],
+};
+
+const GIORNI_SCADENZA = 30;
+const CF_REGEX = /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/;
+
+/**
+ * Gestione in memoria delle pratiche con workflow di stato.
+ * BOZZA -> PROTOCOLLATA -> IN_ISTRUTTORIA -> APPROVATA | RESPINTA
+ * BOZZA e PROTOCOLLATA possono anche andare in ANNULLATA.
+ */
+@Injectable({ providedIn: 'root' })
+export class PraticheService {
+  private readonly orologio = inject(Orologio);
+  private readonly scadenze = inject(ScadenzeService);
+
+  private pratiche: Pratica[] = [];
+  private prossimoId = 1;
+  private contatoriProtocollo: Record<number, number> = {}; // anno -> ultimo numero assegnato
+
+  readonly stati = Object.keys(TRANSIZIONI) as Stato[];
+
+  tutte(): Pratica[] {
+    return this.pratiche;
+  }
+
+  trova(id: number): Pratica | null {
+    return this.pratiche.find((p) => p.id === id) ?? null;
+  }
+
+  /** Ritorna { campo: messaggio }; vuoto se i dati sono validi. */
+  valida(dati?: Partial<DatiPratica> | null): ErroriValidazione {
+    const errori: ErroriValidazione = {};
+    const d = dati || {};
+    if (!d.oggetto || !String(d.oggetto).trim()) {
+      errori.oggetto = 'Oggetto obbligatorio';
+    }
+    if (!d.richiedente || !String(d.richiedente).trim()) {
+      errori.richiedente = 'Richiedente obbligatorio';
+    }
+    if (!d.codiceFiscale) {
+      errori.codiceFiscale = 'Codice fiscale obbligatorio';
+    } else if (!CF_REGEX.test(String(d.codiceFiscale).toUpperCase())) {
+      errori.codiceFiscale = 'Codice fiscale non valido';
+    }
+    return errori;
+  }
+
+  crea(dati: DatiPratica): Pratica {
+    const errori = this.valida(dati);
+    if (Object.keys(errori).length > 0) {
+      throw errore('VALIDAZIONE', 'Dati non validi', errori);
+    }
+    const pratica: Pratica = {
+      id: this.prossimoId++,
+      oggetto: String(dati.oggetto).trim(),
+      richiedente: String(dati.richiedente).trim(),
+      codiceFiscale: String(dati.codiceFiscale).toUpperCase(),
+      stato: 'BOZZA',
+      dataCreazione: this.orologio.oggi(),
+      numeroProtocollo: null,
+      dataProtocollo: null,
+      scadenza: null,
+    };
+    this.pratiche.push(pratica);
+    return pratica;
+  }
+
+  transizioniPossibili(stato: Stato): Stato[] {
+    return (TRANSIZIONI[stato] || []).slice();
+  }
+
+  cambiaStato(id: number, nuovoStato: Stato): Pratica {
+    const pratica = this.trova(id);
+    if (!pratica) {
+      throw errore('NON_TROVATA', 'Pratica non trovata');
+    }
+    if (TRANSIZIONI[pratica.stato].indexOf(nuovoStato) === -1) {
+      throw errore('TRANSIZIONE', 'Transizione non consentita: ' + pratica.stato + ' -> ' + nuovoStato);
+    }
+    if (nuovoStato === 'PROTOCOLLATA') {
+      const oggi = this.orologio.oggi();
+      const anno = oggi.getFullYear();
+      this.contatoriProtocollo[anno] = (this.contatoriProtocollo[anno] || 0) + 1;
+      pratica.numeroProtocollo = anno + '/' + String(this.contatoriProtocollo[anno]).padStart(4, '0');
+      pratica.dataProtocollo = oggi;
+      pratica.scadenza = this.scadenze.aggiungiGiorniLavorativi(oggi, GIORNI_SCADENZA);
+    }
+    pratica.stato = nuovoStato;
+    return pratica;
+  }
+
+  /** criteri: { testo, stato } entrambi opzionali */
+  cerca(criteri: { testo?: string; stato?: Stato } = {}): Pratica[] {
+    const testo = criteri.testo ? String(criteri.testo).trim().toLowerCase() : '';
+    return this.pratiche.filter((p) => {
+      if (criteri.stato && p.stato !== criteri.stato) {
+        return false;
+      }
+      if (testo && (p.oggetto + ' ' + p.richiedente).toLowerCase().indexOf(testo) === -1) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  contaPerStato(): Record<Stato, number> {
+    const conteggi = {} as Record<Stato, number>;
+    this.stati.forEach((s) => {
+      conteggi[s] = 0;
+    });
+    this.pratiche.forEach((p) => {
+      conteggi[p.stato]++;
+    });
+    return conteggi;
+  }
+}
+
+</source>
+<source path="migrated/src/app/components/pratica-form/pratica-form.component.ts">
+import { Component, inject, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { DatiPratica, ErroriValidazione, PraticheService } from '../../services/pratiche.service';
+
+const vuoto = (): DatiPratica => ({ oggetto: '', richiedente: '', codiceFiscale: '' });
+
+/** Form di inserimento con validazione tramite PraticheService (porting di praticaForm). */
+@Component({
+  selector: 'pratica-form',
+  standalone: true,
+  imports: [FormsModule],
+  template: `
+    <form class="pratica-form" (ngSubmit)="invia()">
+      <label>Oggetto
+        <input type="text" name="oggetto" [(ngModel)]="dati.oggetto">
+      </label>
+      @if (tentato && errori.oggetto) {
+        <span class="errore errore-oggetto">{{ errori.oggetto }}</span>
+      }
+
+      <label>Richiedente
+        <input type="text" name="richiedente" [(ngModel)]="dati.richiedente">
+      </label>
+      @if (tentato && errori.richiedente) {
+        <span class="errore errore-richiedente">{{ errori.richiedente }}</span>
+      }
+
+      <label>Codice fiscale
+        <input type="text" name="codiceFiscale" [(ngModel)]="dati.codiceFiscale">
+      </label>
+      @if (tentato && errori.codiceFiscale) {
+        <span class="errore errore-cf">{{ errori.codiceFiscale }}</span>
+      }
+
+      <button type="submit" class="salva">Salva</button>
+    </form>
+  `,
+})
+export class PraticaFormComponent {
+  private readonly pratiche = inject(PraticheService);
+
+  readonly salva = output<DatiPratica>();
+
+  dati: DatiPratica = vuoto();
+  errori: ErroriValidazione = {};
+  tentato = false;
+
+  invia(): boolean {
+    this.tentato = true;
+    // AngularJS (ng-trim) toglieva gli spazi ai bordi dei campi di testo; ngModel di Angular no
+    const dati: DatiPratica = {
+      oggetto: (this.dati.oggetto ?? '').trim(),
+      richiedente: (this.dati.richiedente ?? '').trim(),
+      codiceFiscale: (this.dati.codiceFiscale ?? '').trim(),
+    };
+    this.errori = this.pratiche.valida(dati);
+    if (Object.keys(this.errori).length > 0) {
+      return false;
+    }
+    this.salva.emit(dati);
+    this.dati = vuoto();
+    this.errori = {};
+    this.tentato = false;
+    return true;
+  }
+}
+
+</source>
+<source path="migrated/src/app/components/pratiche-list/pratiche-list.component.ts">
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { StatoLabelPipe } from '../../pipes/stato-label.pipe';
+import type { Pratica } from '../../services/pratiche.service';
+import { ScadenzaBadgeComponent } from '../scadenza-badge/scadenza-badge.component';
+
+/** Lista con filtro testuale e per stato (porting di praticheList). */
+@Component({
+  selector: 'pratiche-list',
+  standalone: true,
+  imports: [FormsModule, StatoLabelPipe, ScadenzaBadgeComponent],
+  template: `
+    <div class="pratiche-list">
+      <div class="filtri">
+        <input type="text" class="filtro-testo" placeholder="Cerca..." [ngModel]="testo" (ngModelChange)="cambiaTesto($event)">
+        <select class="filtro-stato" [ngModel]="stato" (ngModelChange)="cambiaStato($event)">
+          <option value="">Tutti gli stati</option>
+          <option value="BOZZA">Bozza</option>
+          <option value="PROTOCOLLATA">Protocollata</option>
+          <option value="IN_ISTRUTTORIA">In istruttoria</option>
+          <option value="APPROVATA">Approvata</option>
+          <option value="RESPINTA">Respinta</option>
+          <option value="ANNULLATA">Annullata</option>
+        </select>
+        <button type="button" class="reset" (click)="resetFiltri()">Azzera</button>
+      </div>
+
+      @if (visibili.length === 0) {
+        <p class="vuoto">Nessuna pratica</p>
+      } @else {
+        <ul class="elenco">
+          @for (p of visibili; track p.id) {
+            <li class="riga" (click)="selezionaRiga(p)">
+              <span class="oggetto">{{ p.oggetto }}</span>
+              <span class="richiedente">{{ p.richiedente }}</span>
+              <span class="stato" [class]="'stato-' + p.stato">{{ p.stato | statoLabel }}</span>
+              <span class="protocollo">{{ p.numeroProtocollo || '—' }}</span>
+              <scadenza-badge [scadenza]="p.scadenza" />
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  `,
+})
+export class PraticheListComponent implements OnChanges {
+  @Input() pratiche: Pratica[] | null | undefined = [];
+  @Output() seleziona = new EventEmitter<Pratica>();
+
+  testo = '';
+  stato = '';
+  visibili: Pratica[] = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['pratiche']) {
+      this.filtra();
+    }
+  }
+
+  cambiaTesto(valore: string): void {
+    this.testo = valore;
+    this.filtra();
+  }
+
+  cambiaStato(valore: string): void {
+    this.stato = valore;
+    this.filtra();
+  }
+
+  selezionaRiga(pratica: Pratica): void {
+    this.seleziona.emit(pratica);
+  }
+
+  resetFiltri(): void {
+    this.testo = '';
+    this.stato = '';
+    this.filtra();
+  }
+
+  private calcola(): Pratica[] {
+    const testo = this.testo.trim().toLowerCase();
+    return (this.pratiche || []).filter((p) => {
+      if (this.stato && p.stato !== this.stato) {
+        return false;
+      }
+      if (testo && (p.oggetto + ' ' + p.richiedente).toLowerCase().indexOf(testo) === -1) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  private filtra(): void {
+    this.visibili = this.calcola();
+  }
+}
+
+</source>
+<source path="migrated/src/app/pipes/stato-label.pipe.ts">
+import { Pipe, PipeTransform } from '@angular/core';
+
+const ETICHETTE: Record<string, string> = {
+  BOZZA: 'Bozza',
+  PROTOCOLLATA: 'Protocollata',
+  IN_ISTRUTTORIA: 'In istruttoria',
+  APPROVATA: 'Approvata',
+  RESPINTA: 'Respinta',
+  ANNULLATA: 'Annullata',
+};
+
+/** Trasforma il codice di stato in etichetta leggibile (porting del filtro AngularJS statoLabel). */
+@Pipe({ name: 'statoLabel', standalone: true })
+export class StatoLabelPipe implements PipeTransform {
+  transform(stato: string | null | undefined): string {
+    if (!stato) {
+      return '';
+    }
+    // `||` e non `??`: preserva esattamente il comportamento del filtro legacy
+    return ETICHETTE[stato] || stato;
+  }
+}
+
+</source>
+
+### Tentativo precedente (1) — FALLITO al gate "tests"
+<source path="migrated/src/app/pages/pagina-pratiche.component.ts">
+import { Component, inject } from '@angular/core';
+
+import { PraticaFormComponent } from '../components/pratica-form/pratica-form.component';
+import { PraticheListComponent } from '../components/pratiche-list/pratiche-list.component';
+import { StatoLabelPipe } from '../pipes/stato-label.pipe';
+import { DatiPratica, Pratica, PraticheService, Stato } from '../services/pratiche.service';
+
+interface Messaggio {
+  tipo: 'ok' | 'errore';
+  testo: string;
+}
+
+const DURATA_MESSAGGIO_MS = 3000;
+
+/** Pagina "Pratiche": sostituisce MainController + index.html. */
+@Component({
+  selector: 'pagina-pratiche',
+  standalone: true,
+  imports: [PraticaFormComponent, PraticheListComponent, StatoLabelPipe],
+  template: `
+    <h1>Pratiche</h1>
+
+    @if (messaggio) {
+      <div class="messaggio" [class]="'msg-' + messaggio.tipo">{{ messaggio.testo }}</div>
+    }
+
+    <pratica-form (salva)="salva($event)" />
+
+    <pratiche-list [pratiche]="pratiche" (seleziona)="seleziona($event)" />
+
+    @if (selezionata) {
+      <div class="dettaglio">
+        <h2>{{ selezionata.oggetto }}</h2>
+        @for (s of azioniDisponibili(); track s) {
+          <button type="button" (click)="avanza(s)">{{ s | statoLabel }}</button>
+        }
+      </div>
+    }
+  `,
+})
+export class PaginaPraticheComponent {
+  private readonly servizio = inject(PraticheService);
+
+  pratiche: Pratica[] = this.servizio.tutte();
+  selezionata: Pratica | null = null;
+  messaggio: Messaggio | null = null;
+  contatori = this.servizio.contaPerStato();
+
+  private aggiorna(): void {
+    // nuovo array a ogni cambiamento: serve all'input "pratiche" della lista
+    this.pratiche = this.servizio.tutte();
+    this.contatori = this.servizio.contaPerStato();
+  }
+
+  private mostraMessaggio(tipo: Messaggio['tipo'], testo: string): void {
+    this.messaggio = { tipo, testo };
+    // un timer per messaggio, senza annullare i precedenti: come $timeout nel controller legacy
+    setTimeout(() => {
+      this.messaggio = null;
+    }, DURATA_MESSAGGIO_MS);
+  }
+
+  salva(dati: DatiPratica): void {
+    try {
+      const p = this.servizio.crea(dati);
+      this.aggiorna();
+      this.mostraMessaggio('ok', 'Pratica ' + p.id + ' creata');
+    } catch (e) {
+      this.mostraMessaggio('errore', (e as Error).message);
+    }
+  }
+
+  seleziona(pratica: Pratica | null): void {
+    this.selezionata = pratica;
+  }
+
+  azioniDisponibili(): Stato[] {
+    if (!this.selezionata) {
+      return [];
+    }
+    return this.servizio.transizioniPossibili(this.selezionata.stato);
+  }
+
+  avanza(nuovoStato: Stato): void {
+    if (!this.selezionata) {
+      return;
+    }
+    try {
+      this.servizio.cambiaStato(this.selezionata.id, nuovoStato);
+      this.aggiorna();
+      this.mostraMessaggio('ok', 'Stato aggiornato a ' + nuovoStato);
+    } catch (e) {
+      this.mostraMessaggio('errore', (e as Error).message);
+    }
+  }
+}
+
+</source>
+<errore>
+Running one project: migrated
+FAIL migrated migrated/src/app/pages/pagina-pratiche.component.spec.ts
+  PaginaPraticheComponent (gold, portato da MainController + index.html)
+    stato iniziale
+      ✓ nessun messaggio, nessun dettaglio, lista vuota (100 ms)
+      ✓ espone selezionata null, messaggio null e contatori a zero (13 ms)
+    salva
+      ✕ compilando il form compare la pratica in lista, il messaggio ok e il contatore sale (19 ms)
+      ✕ più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio) (19 ms)
+      ✓ il form invalido non crea nulla e non mostra messaggi di pagina (12 ms)
+      ✓ salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla (11 ms)
+    selezione e avanzamento
+      ✕ il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili) (12 ms)
+      ✕ avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta) (13 ms)
+      ✕ una transizione non consentita mostra l'errore e lascia lo stato (21 ms)
+      ✕ avanza senza selezione non fa nulla (nemmeno un messaggio) (12 ms)
+      ✕ azioniDisponibili è vuoto senza selezione (13 ms)
+    timer dei messaggi
+      ✓ nel DOM il messaggio resta per 3 secondi e poi sparisce (13 ms)
+      ✓ il messaggio sparisce dopo esattamente 3 secondi (9 ms)
+      ✓ QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio (13 ms)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › salva › compilando il form compare la pratica in lista, il messaggio ok e il contatore sale
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      84 |     prova('compilando il form compare la pratica in lista, il messaggio ok e il contatore sale', () => {
+      85 |       creaDaForm('Richiesta contributo');
+    > 86 |       expect($$('li')).toHaveLength(1);
+         |                        ^
+      87 |       expect($('li .oggetto')?.textContent?.trim()).toBe('Richiesta contributo');
+      88 |       expect($('li .stato')?.textContent?.trim()).toBe('Bozza');
+      89 |       expect($('.messaggio')?.textContent?.trim()).toBe('Pratica 1 creata');
+
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:86:24
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › salva › più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio)
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+       96 |       creaDaForm('Prima');
+       97 |       creaDaForm('Seconda');
+    >  98 |       expect($$('li')).toHaveLength(2);
+          |                        ^
+       99 |       expect($$('li .oggetto').map((e) => e.textContent?.trim())).toEqual(['Prima', 'Seconda']);
+… (128 righe omesse)
+</errore>
+Correggi il problema senza indebolire il comportamento atteso.

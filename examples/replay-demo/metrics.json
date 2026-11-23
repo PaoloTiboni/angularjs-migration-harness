@@ -1,14 +1,14 @@
 {
   "adapter": "replay",
   "model": null,
-  "startedAt": "2026-11-23T11:20:42.406Z",
+  "startedAt": "2026-11-23T11:45:26.933Z",
   "maxAttempts": 3,
   "attempts": [
     {
       "unit": "stato-label",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 4005,
+      "gateMs": 3913,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 4556
@@ -17,7 +17,7 @@
       "unit": "stato-label",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 3836,
+      "gateMs": 3539,
       "outcome": "pass",
       "failedGate": null,
       "promptChars": 8499
@@ -26,7 +26,7 @@
       "unit": "pratiche-service",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 1059,
+      "gateMs": 1067,
       "outcome": "fail",
       "failedGate": "typecheck",
       "promptChars": 24323
@@ -35,7 +35,7 @@
       "unit": "pratiche-service",
       "attempt": 2,
       "agentMs": 1,
-      "gateMs": 3633,
+      "gateMs": 4139,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 30187
@@ -44,7 +44,7 @@
       "unit": "pratiche-service",
       "attempt": 3,
       "agentMs": 0,
-      "gateMs": 3548,
+      "gateMs": 4245,
       "outcome": "pass",
       "failedGate": null,
       "promptChars": 32610
@@ -53,7 +53,7 @@
       "unit": "pratica-form",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 3715,
+      "gateMs": 4133,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 15515
@@ -62,25 +62,25 @@
       "unit": "pratica-form",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 4104,
+      "gateMs": 4411,
       "outcome": "fail",
       "failedGate": "tests",
-      "promptChars": 20759
+      "promptChars": 20760
     },
     {
       "unit": "pratica-form",
       "attempt": 3,
       "agentMs": 0,
-      "gateMs": 4289,
+      "gateMs": 4160,
       "outcome": "pass",
       "failedGate": null,
-      "promptChars": 19289
+      "promptChars": 19304
     },
     {
       "unit": "pratiche-list",
       "attempt": 1,
       "agentMs": 0,
-      "gateMs": 4722,
+      "gateMs": 4376,
       "outcome": "fail",
       "failedGate": "tests",
       "promptChars": 17579
@@ -89,10 +89,37 @@
       "unit": "pratiche-list",
       "attempt": 2,
       "agentMs": 0,
-      "gateMs": 4328,
+      "gateMs": 4742,
       "outcome": "pass",
       "failedGate": null,
-      "promptChars": 23974
+      "promptChars": 23988
+    },
+    {
+      "unit": "pagina-pratiche",
+      "attempt": 1,
+      "agentMs": 0,
+      "gateMs": 4117,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 32109
+    },
+    {
+      "unit": "pagina-pratiche",
+      "attempt": 2,
+      "agentMs": 0,
+      "gateMs": 4830,
+      "outcome": "fail",
+      "failedGate": "tests",
+      "promptChars": 38738
+    },
+    {
+      "unit": "pagina-pratiche",
+      "attempt": 3,
+      "agentMs": 0,
+      "gateMs": 4653,
+      "outcome": "pass",
+      "failedGate": null,
+      "promptChars": 38396
     }
   ],
   "summary": {
@@ -102,7 +129,7 @@
         "attempts": 2,
         "success": true,
         "firstTry": false,
-        "totalMs": 7841,
+        "totalMs": 7452,
         "outcomes": [
           "fail:tests",
           "pass"
@@ -113,7 +140,7 @@
         "attempts": 3,
         "success": true,
         "firstTry": false,
-        "totalMs": 8241,
+        "totalMs": 9452,
         "outcomes": [
           "fail:typecheck",
           "fail:tests",
@@ -125,7 +152,7 @@
         "attempts": 3,
         "success": true,
         "firstTry": false,
-        "totalMs": 12108,
+        "totalMs": 12704,
         "outcomes": [
           "fail:tests",
           "fail:tests",
@@ -137,21 +164,33 @@
         "attempts": 2,
         "success": true,
         "firstTry": false,
-        "totalMs": 9050,
+        "totalMs": 9118,
         "outcomes": [
+          "fail:tests",
+          "pass"
+        ]
+      },
+      {
+        "unit": "pagina-pratiche",
+        "attempts": 3,
+        "success": true,
+        "firstTry": false,
+        "totalMs": 13600,
+        "outcomes": [
+          "fail:tests",
           "fail:tests",
           "pass"
         ]
       }
     ],
     "totals": {
-      "units": 4,
-      "succeeded": 4,
+      "units": 5,
+      "succeeded": 5,
       "firstTry": 0,
-      "meanAttemptsToSuccess": 2.5,
-      "totalAttempts": 10,
+      "meanAttemptsToSuccess": 2.6,
+      "totalAttempts": 13,
       "failuresByKind": {
-        "tests": 5,
+        "tests": 7,
         "typecheck": 1
       }
     }

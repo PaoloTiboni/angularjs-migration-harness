@@ -1,0 +1,187 @@
+Running one project: migrated
+FAIL migrated migrated/src/app/pages/pagina-pratiche.component.spec.ts
+  PaginaPraticheComponent (gold, portato da MainController + index.html)
+    stato iniziale
+      ✓ nessun messaggio, nessun dettaglio, lista vuota (100 ms)
+      ✓ espone selezionata null, messaggio null e contatori a zero (13 ms)
+    salva
+      ✕ compilando il form compare la pratica in lista, il messaggio ok e il contatore sale (19 ms)
+      ✕ più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio) (19 ms)
+      ✓ il form invalido non crea nulla e non mostra messaggi di pagina (12 ms)
+      ✓ salva con dati non validi (chiamata diretta) mostra un messaggio di errore e non crea nulla (11 ms)
+    selezione e avanzamento
+      ✕ il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili) (12 ms)
+      ✕ avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta) (13 ms)
+      ✕ una transizione non consentita mostra l'errore e lascia lo stato (21 ms)
+      ✕ avanza senza selezione non fa nulla (nemmeno un messaggio) (12 ms)
+      ✕ azioniDisponibili è vuoto senza selezione (13 ms)
+    timer dei messaggi
+      ✓ nel DOM il messaggio resta per 3 secondi e poi sparisce (13 ms)
+      ✓ il messaggio sparisce dopo esattamente 3 secondi (9 ms)
+      ✓ QUIRK preservato: i timer non si annullano; il primo cancella in anticipo il secondo messaggio (13 ms)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › salva › compilando il form compare la pratica in lista, il messaggio ok e il contatore sale
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      84 |     prova('compilando il form compare la pratica in lista, il messaggio ok e il contatore sale', () => {
+      85 |       creaDaForm('Richiesta contributo');
+    > 86 |       expect($$('li')).toHaveLength(1);
+         |                        ^
+      87 |       expect($('li .oggetto')?.textContent?.trim()).toBe('Richiesta contributo');
+      88 |       expect($('li .stato')?.textContent?.trim()).toBe('Bozza');
+      89 |       expect($('.messaggio')?.textContent?.trim()).toBe('Pratica 1 creata');
+
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:86:24
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › salva › più pratiche create di seguito compaiono tutte (la lista riceve un nuovo array a ogni salvataggio)
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+       96 |       creaDaForm('Prima');
+       97 |       creaDaForm('Seconda');
+    >  98 |       expect($$('li')).toHaveLength(2);
+          |                        ^
+       99 |       expect($$('li .oggetto').map((e) => e.textContent?.trim())).toEqual(['Prima', 'Seconda']);
+      100 |     });
+      101 |
+
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:98:24
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › selezione e avanzamento › il click su una riga mostra il dettaglio con le azioni possibili (etichette leggibili)
+
+    TypeError: Cannot read properties of undefined (reading 'click')
+
+      122 |     function conSelezione() {
+      123 |       creaDaForm('Richiesta contributo');
+    > 124 |       ($$('li')[0] as HTMLElement).click();
+          |                                   ^
+      125 |       stabile();
+      126 |     }
+      127 |
+
+      at conSelezione (migrated/src/app/pages/pagina-pratiche.component.spec.ts:124:35)
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:129:7
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › selezione e avanzamento › avanzare aggiorna lista, protocollo, bottoni e messaggio (con il codice, non l'etichetta)
+
+    TypeError: Cannot read properties of undefined (reading 'click')
+
+      122 |     function conSelezione() {
+      123 |       creaDaForm('Richiesta contributo');
+    > 124 |       ($$('li')[0] as HTMLElement).click();
+          |                                   ^
+      125 |       stabile();
+      126 |     }
+      127 |
+
+      at conSelezione (migrated/src/app/pages/pagina-pratiche.component.spec.ts:124:35)
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:136:7
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › selezione e avanzamento › una transizione non consentita mostra l'errore e lascia lo stato
+
+    TypeError: Cannot read properties of undefined (reading 'click')
+
+      122 |     function conSelezione() {
+      123 |       creaDaForm('Richiesta contributo');
+    > 124 |       ($$('li')[0] as HTMLElement).click();
+          |                                   ^
+      125 |       stabile();
+      126 |     }
+      127 |
+
+      at conSelezione (migrated/src/app/pages/pagina-pratiche.component.spec.ts:124:35)
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:147:7
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › selezione e avanzamento › avanza senza selezione non fa nulla (nemmeno un messaggio)
+
+    TypeError: Cannot read properties of undefined (reading 'click')
+
+      122 |     function conSelezione() {
+      123 |       creaDaForm('Richiesta contributo');
+    > 124 |       ($$('li')[0] as HTMLElement).click();
+          |                                   ^
+      125 |       stabile();
+      126 |     }
+      127 |
+
+      at conSelezione (migrated/src/app/pages/pagina-pratiche.component.spec.ts:124:35)
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:156:7
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+  ● PaginaPraticheComponent (gold, portato da MainController + index.html) › selezione e avanzamento › azioniDisponibili è vuoto senza selezione
+
+    TypeError: Cannot read properties of undefined (reading 'click')
+
+      122 |     function conSelezione() {
+      123 |       creaDaForm('Richiesta contributo');
+    > 124 |       ($$('li')[0] as HTMLElement).click();
+          |                                   ^
+      125 |       stabile();
+      126 |     }
+      127 |
+
+      at conSelezione (migrated/src/app/pages/pagina-pratiche.component.spec.ts:124:35)
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:167:7
+      at migrated/src/app/pages/pagina-pratiche.component.spec.ts:53:9
+      at fakeAsyncFn (../node_modules/zone.js/bundles/zone-testing.umd.js:1794:30)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (../node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (../node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (../node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (../node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+Test Suites: 1 failed, 1 total
+Tests:       7 failed, 7 passed, 14 total
+Snapshots:   0 total
+Time:        2.501 s, estimated 29 s
+Ran all test suites within paths "migrated/src/app/pages/pagina-pratiche.component.spec.ts".

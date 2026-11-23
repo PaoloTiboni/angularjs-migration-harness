@@ -86,15 +86,19 @@ Sono il motivo per cui i test di caratterizzazione valgono più del "sembra ugua
 | Binding `<` e mutazione in place | `push()` sullo stesso array non aggiorna la lista (solo un nuovo riferimento). Un getter "più comodo" la farebbe aggiornare. | gold spec `pratiche-list`, test legacy |
 | Bug latente `statoLabel('constructor')` | Restituisce la funzione `Object`. Preservato, non corretto. | test legacy |
 | Quirk del badge | "oggi" letto solo quando cambia la scadenza. | contratto condiviso `scadenza-badge` |
+| Timer dei messaggi non annullati | Il primo `$timeout` cancella in anticipo il secondo messaggio (vive 1s invece di 3). Aggiungere `clearTimeout` è un "miglioramento" che cambia il comportamento. | gold spec `pagina-pratiche`, test legacy |
+| Nuovo array a ogni modifica | La pagina passa alla lista un array nuovo (`slice()`): senza, la lista non si aggiorna a causa del quirk del binding. Un'interazione tra due quirk. | gold spec `pagina-pratiche` |
 | Test vuoto per caso | Il 15/8/2026 è sabato: il test di Ferragosto non provava nulla. L'ha trovato una mutazione. | `scadenze.service` (2025) |
+
+Lezione sui test Angular con timer: `fixture.whenStable()` aspetta anche i `setTimeout` pendenti, quindi in
+un gold spec con messaggi a tempo faceva sparire il messaggio prima delle asserzioni. Si usa `fakeAsync`.
 
 Le mutazioni hanno anche mostrato un test mio che non verificava nulla (copia dei dati emessi dal form,
 mutante equivalente perché il form si azzera): rimosso invece di tenerlo come finta copertura.
 
 ## Prossimi passi
 
-1. **Primo run reale** con una chiave API sul tuo PC (`pratica-form` e `pratiche-list` sono le unità più
-   interessanti: hanno le trappole). Dati veri: tasso di successo, tentativi, dove sbaglia l'agente.
-2. **Ultima unità**: `main.controller` + pagina `index.html` (`$scope`/`$timeout` → componente root con signals).
-3. **Fase 5, confronto**: stesso set con e senza gate/feedback, e con test nascosti.
-4. **Report aggregato** su più run (varianza tra run, costo in token da `usage`).
+1. **Primo run reale** con una chiave API sul tuo PC (`pratica-form`, `pratiche-list` e `pagina-pratiche` sono le unità
+   più interessanti: hanno le trappole). Dati veri: tasso di successo, tentativi, dove sbaglia l'agente.
+2. **Fase 5, confronto**: stesso set con e senza gate/feedback, e con test nascosti.
+3. **Report aggregato** su più run (varianza tra run, costo in token da `usage`).

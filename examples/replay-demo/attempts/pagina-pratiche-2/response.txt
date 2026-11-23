@@ -1,0 +1,101 @@
+<file path="migrated/src/app/pages/pagina-pratiche.component.ts">
+import { Component, inject } from '@angular/core';
+
+import { PraticaFormComponent } from '../components/pratica-form/pratica-form.component';
+import { PraticheListComponent } from '../components/pratiche-list/pratiche-list.component';
+import { StatoLabelPipe } from '../pipes/stato-label.pipe';
+import { DatiPratica, Pratica, PraticheService, Stato } from '../services/pratiche.service';
+
+interface Messaggio {
+  tipo: 'ok' | 'errore';
+  testo: string;
+}
+
+const DURATA_MESSAGGIO_MS = 3000;
+
+/** Pagina "Pratiche": sostituisce MainController + index.html. */
+@Component({
+  selector: 'pagina-pratiche',
+  standalone: true,
+  imports: [PraticaFormComponent, PraticheListComponent, StatoLabelPipe],
+  template: `
+    <h1>Pratiche</h1>
+
+    @if (messaggio) {
+      <div class="messaggio" [class]="'msg-' + messaggio.tipo">{{ messaggio.testo }}</div>
+    }
+
+    <pratica-form (salva)="salva($event)" />
+
+    <pratiche-list [pratiche]="pratiche" (seleziona)="seleziona($event)" />
+
+    @if (selezionata) {
+      <div class="dettaglio">
+        <h2>{{ selezionata.oggetto }}</h2>
+        @for (s of azioniDisponibili(); track s) {
+          <button type="button" (click)="avanza(s)">{{ s | statoLabel }}</button>
+        }
+      </div>
+    }
+  `,
+})
+export class PaginaPraticheComponent {
+  private readonly servizio = inject(PraticheService);
+
+  pratiche: Pratica[] = this.servizio.tutte();
+  selezionata: Pratica | null = null;
+  messaggio: Messaggio | null = null;
+  contatori = this.servizio.contaPerStato();
+
+  private timer: ReturnType<typeof setTimeout> | undefined;
+
+  private aggiorna(): void {
+    // nuovo array a ogni cambiamento: serve all'input "pratiche" della lista
+    this.pratiche = this.servizio.tutte().slice();
+    this.contatori = this.servizio.contaPerStato();
+  }
+
+  private mostraMessaggio(tipo: Messaggio['tipo'], testo: string): void {
+    this.messaggio = { tipo, testo };
+    // un timer per messaggio, senza annullare i precedenti: come $timeout nel controller legacy
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.messaggio = null;
+    }, DURATA_MESSAGGIO_MS);
+  }
+
+  salva(dati: DatiPratica): void {
+    try {
+      const p = this.servizio.crea(dati);
+      this.aggiorna();
+      this.mostraMessaggio('ok', 'Pratica ' + p.id + ' creata');
+    } catch (e) {
+      this.mostraMessaggio('errore', (e as Error).message);
+    }
+  }
+
+  seleziona(pratica: Pratica | null): void {
+    this.selezionata = pratica;
+  }
+
+  azioniDisponibili(): Stato[] {
+    if (!this.selezionata) {
+      return [];
+    }
+    return this.servizio.transizioniPossibili(this.selezionata.stato);
+  }
+
+  avanza(nuovoStato: Stato): void {
+    if (!this.selezionata) {
+      return;
+    }
+    try {
+      this.servizio.cambiaStato(this.selezionata.id, nuovoStato);
+      this.aggiorna();
+      this.mostraMessaggio('ok', 'Stato aggiornato a ' + nuovoStato);
+    } catch (e) {
+      this.mostraMessaggio('errore', (e as Error).message);
+    }
+  }
+}
+</file>
